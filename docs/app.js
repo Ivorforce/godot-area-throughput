@@ -124,13 +124,36 @@ function resolutionSeries(data, horizon, slice) {
 
 // ---- charts -----------------------------------------------------------------
 
+// The x axis is year-oriented: a gridline and a year label at every January,
+// faint monthly lines only in short ranges. autoSkip is off because Chart.js
+// draws gridlines only at surviving ticks, which would drop Januaries.
+function isJanuary(ctx) {
+  const label = ctx.chart.data.labels[ctx.index ?? ctx.tick?.value];
+  return typeof label === "string" && label.endsWith("-01");
+}
+
 const BASE_OPTS = {
   responsive: true,
   maintainAspectRatio: false,
   animation: false,
   interaction: { mode: "index", intersect: false },
   scales: {
-    x: { ticks: { autoSkip: true, maxTicksLimit: 16, maxRotation: 0 } },
+    x: {
+      ticks: {
+        autoSkip: false,
+        maxRotation: 0,
+        callback(value) {
+          const label = this.getLabelForValue(value);
+          return label.endsWith("-01") ? label.slice(0, 4) : "";
+        },
+      },
+      grid: {
+        color: (ctx) => isJanuary(ctx) ? "#b6bec7"
+          : ctx.chart.data.labels.length <= 36 ? "rgba(208,215,222,.4)"
+          : "rgba(0,0,0,0)",
+        lineWidth: (ctx) => (isJanuary(ctx) ? 1.5 : 1),
+      },
+    },
     y: { beginAtZero: true },
   },
 };
