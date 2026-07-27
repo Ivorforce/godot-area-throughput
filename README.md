@@ -100,6 +100,13 @@ Overview table (from `index.json`, trailing 12 complete months):
   label's charts start at its first-ever PR (early history undercounts).
 - Resolution-rate lines stop before the present — months that haven't yet had
   the full 7/60/365 days aren't shown; deliberate, not missing data.
+- Release-branch PRs (base `3.x` etc.) are included: in Godot's workflow they
+  are real work, not backport copies — cherry-picks land as batch commits (1–3
+  batch PRs a month, negligible). The `cherrypick:*` labels are transient (
+  applied when selected, removed once the cherry-pick lands), so with labels
+  read as current state those series show the pending queue, not history —
+  one more reason they're excluded from the ranking. `baseRef` is stored per
+  record if branch-specific slicing is ever wanted.
 - Reviews only exist as a GitHub feature since late 2016; earlier history has
   opened/merged data only.
 - Minor known limits: the "(N others)" table rows sum per-person credits, so
