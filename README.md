@@ -109,6 +109,12 @@ Overview table (from `index.json`, trailing 12 complete months):
 - Labels are read as they are today: renamed labels keep their full history
   (they're tracked by ID), deleted labels keep their last-known name, and each
   label's charts start at its first-ever PR (early history undercounts).
+- A label's stats cover every PR carrying it, whatever the PR's main subject.
+  Cross-cutting labels that are routinely added alongside a primary area
+  (`documentation`, `usability`, …) inherit that area's throughput: their
+  resolution rates, reviewers, and backlog describe "PRs touching X", not a
+  dedicated X team's service. This does not even out — the bias flows one way,
+  from high-traffic primary areas into commonly-secondary labels.
 - Resolution-rate layers stop before the present — months that haven't yet had
   a span's full length aren't judged against it; deliberate, not missing data.
 - Release-branch PRs (base `3.x` etc.) are included: in Godot's workflow they

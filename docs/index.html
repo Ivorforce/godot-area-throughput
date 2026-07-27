@@ -185,6 +185,11 @@ most decisions, that is capacity the project owes them, not a problem they cause
     <li>Labels are read as they are today. Renamed labels keep their full history
         (they're tracked by ID); deleted labels keep their last-known name; each
         label's charts start at its first-ever PR.</li>
+    <li>A label's stats cover every PR carrying it, whatever the PR's main subject.
+        Cross-cutting labels that ride along on other areas' PRs (documentation,
+        usability, …) therefore describe "PRs touching this" — largely reviewed,
+        blocked, and resolved on the primary area's behalf — not a dedicated team's
+        service.</li>
     <li>These are throughput statistics, not performance reviews. They cannot see
         review depth, mentoring, design discussions, issue triage, or any work
         outside PR reviews — comparing individuals by these numbers alone
