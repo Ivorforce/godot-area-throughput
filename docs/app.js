@@ -442,7 +442,7 @@ async function init() {
   makeSortable("reviewers-table", tableRows.reviewers, reviewerCols);
   makeSortable("authors-table", tableRows.authors, authorCols);
 
-  state.label = "topic:core";
+  state.label = "all";
   readHash();
   render();
 }
