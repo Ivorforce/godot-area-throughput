@@ -1,0 +1,274 @@
+{
+ "LA_kwDOAO6SJc77GWog": {
+  "color": "446699",
+  "name": "cherrypick:3.5"
+ },
+ "LA_kwDOAO6SJc8AAAAB4iS2Xw": {
+  "color": "446699",
+  "name": "cherrypick:4.4"
+ },
+ "LA_kwDOAO6SJc8AAAAB5NI2wQ": {
+  "color": "ffee88",
+  "name": "topic:i18n"
+ },
+ "LA_kwDOAO6SJc8AAAABAjhGIg": {
+  "color": "ffee88",
+  "name": "topic:multiplayer"
+ },
+ "LA_kwDOAO6SJc8AAAABCNCFwA": {
+  "color": "ffee88",
+  "name": "topic:particles"
+ },
+ "LA_kwDOAO6SJc8AAAABaLK0NQ": {
+  "color": "E94A26",
+  "name": "spam"
+ },
+ "LA_kwDOAO6SJc8AAAABbYOrww": {
+  "color": "446699",
+  "name": "cherrypick:4.2"
+ },
+ "LA_kwDOAO6SJc8AAAABocF7RA": {
+  "color": "446699",
+  "name": "cherrypick:4.3"
+ },
+ "LA_kwDOAO6SJc8AAAABqcb2hg": {
+  "color": "ffee88",
+  "name": "topic:vfx"
+ },
+ "LA_kwDOAO6SJc8AAAABvBBvPQ": {
+  "color": "446699",
+  "name": "cherrypick:3.6"
+ },
+ "LA_kwDOAO6SJc8AAAACF5d_aw": {
+  "color": "446699",
+  "name": "cherrypick:4.5"
+ },
+ "LA_kwDOAO6SJc8AAAACOSHDbA": {
+  "color": "e4e4e4",
+  "name": "platform:visionos"
+ },
+ "LA_kwDOAO6SJc8AAAACUZq8lQ": {
+  "color": "446699",
+  "name": "cherrypick:4.6"
+ },
+ "LA_kwDOAO6SJc8AAAACjMoaZQ": {
+  "color": "446699",
+  "name": "cherrypick:4.7"
+ },
+ "MDU6TGFiZWw0MTAwNjQ0ODU=": {
+  "color": "ffcc44",
+  "name": "needs testing"
+ },
+ "MDU6TGFiZWw0MTk3NTI2NDI=": {
+  "color": "ffee88",
+  "name": "topic:visualscript"
+ },
+ "MDU6TGFiZWw1NzI3ODE5OTc=": {
+  "color": "ffee88",
+  "name": "topic:audio"
+ },
+ "MDU6TGFiZWw1ODA1MzcwMDM=": {
+  "color": "ffee88",
+  "name": "topic:gdextension"
+ },
+ "MDU6TGFiZWw2NDk4MDA3MDE=": {
+  "color": "ffee88",
+  "name": "topic:network"
+ },
+ "MDU6TGFiZWw3MDkyNjk3NzU=": {
+  "color": "ffee88",
+  "name": "topic:dotnet"
+ },
+ "MDU6TGFiZWw3MzMzMDA2NA==": {
+  "color": "ff6055",
+  "name": "bug"
+ },
+ "MDU6TGFiZWw3MzMzMDA2Ng==": {
+  "color": "aaccff",
+  "name": "enhancement"
+ },
+ "MDU6TGFiZWw3MzMzMDA2OA==": {
+  "color": "4466ff",
+  "name": "feature proposal"
+ },
+ "MDU6TGFiZWw4NjU1ODUwMDA=": {
+  "color": "ffee88",
+  "name": "topic:xr"
+ },
+ "MDU6TGFiZWw4OTAzMTA1MDI=": {
+  "color": "ffee88",
+  "name": "topic:import"
+ },
+ "MDU6TGFiZWw4OTAzMTA2NjQ=": {
+  "color": "ffee88",
+  "name": "topic:input"
+ },
+ "MDU6TGFiZWw5NTUwNzk2ODQ=": {
+  "color": "b64245",
+  "name": "breaks compat"
+ },
+ "MDU6TGFiZWwxMDA3MDMzNjk3": {
+  "color": "ff7766",
+  "name": "salvageable"
+ },
+ "MDU6TGFiZWwxMTYxNzI2NDA1": {
+  "color": "7956a5",
+  "name": "high priority"
+ },
+ "MDU6TGFiZWwxMzI3MzE4Mjcx": {
+  "color": "885544",
+  "name": "crash"
+ },
+ "MDU6TGFiZWwxMzMyMzAzMTE5": {
+  "color": "ff63ac",
+  "name": "regression"
+ },
+ "MDU6TGFiZWwxMzQ5NjEzMTI0": {
+  "color": "88f795",
+  "name": "for pr meeting"
+ },
+ "MDU6TGFiZWwxNjA5NDQyMDYy": {
+  "color": "ffee88",
+  "name": "topic:shaders"
+ },
+ "MDU6TGFiZWwxNjQ3MDUzMjAw": {
+  "color": "446699",
+  "name": "cherrypick:3.x"
+ },
+ "MDU6TGFiZWwxNzMyNzIwNzc5": {
+  "color": "ffee88",
+  "name": "topic:gui"
+ },
+ "MDU6TGFiZWwxNzUyMDQwNjk0": {
+  "color": "ffee88",
+  "name": "topic:navigation"
+ },
+ "MDU6TGFiZWwyMDU0MTc0MTM=": {
+  "color": "e4e4e4",
+  "name": "platform:windows"
+ },
+ "MDU6TGFiZWwyMjMxNTkzNjg1": {
+  "color": "ffee88",
+  "name": "topic:tests"
+ },
+ "MDU6TGFiZWwyMzA0OTQ4MTIx": {
+  "color": "ffee88",
+  "name": "topic:codestyle"
+ },
+ "MDU6TGFiZWwyNjY2NzA1NjQ4": {
+  "color": "ffee88",
+  "name": "topic:animation"
+ },
+ "MDU6TGFiZWwyNjY2NzA4MDU5": {
+  "color": "ffee88",
+  "name": "topic:2d"
+ },
+ "MDU6TGFiZWwyNjY2NzA4Mjg5": {
+  "color": "ffee88",
+  "name": "topic:3d"
+ },
+ "MDU6TGFiZWwyNzk1MzcxNzY=": {
+  "color": "99ffff",
+  "name": "good first issue"
+ },
+ "MDU6TGFiZWwyNzkwOTY5OTc=": {
+  "color": "aaaaaa",
+  "name": "archived"
+ },
+ "MDU6TGFiZWwyNzkwOTc0NTU=": {
+  "color": "e4e4e4",
+  "name": "platform:web"
+ },
+ "MDU6TGFiZWwyNzkwOTc1MTk=": {
+  "color": "e4e4e4",
+  "name": "platform:ios"
+ },
+ "MDU6TGFiZWwyNzkwOTc1NjI=": {
+  "color": "e4e4e4",
+  "name": "platform:android"
+ },
+ "MDU6TGFiZWwyNzkwOTc3ODA=": {
+  "color": "e4e4e4",
+  "name": "platform:macos"
+ },
+ "MDU6TGFiZWwyNzkwOTc5NjY=": {
+  "color": "ffee88",
+  "name": "topic:core"
+ },
+ "MDU6TGFiZWwyNzkwOTcxNjI=": {
+  "color": "ccaaff",
+  "name": "discussion"
+ },
+ "MDU6TGFiZWwyNzkwOTczMjY=": {
+  "color": "e4e4e4",
+  "name": "platform:linuxbsd"
+ },
+ "MDU6TGFiZWwyNzkwOTgwMDk=": {
+  "color": "ffee88",
+  "name": "topic:buildsystem"
+ },
+ "MDU6TGFiZWwyNzkwOTgwODI=": {
+  "color": "ffee88",
+  "name": "topic:gdscript"
+ },
+ "MDU6TGFiZWwyNzkwOTgxMTE=": {
+  "color": "ffee88",
+  "name": "topic:rendering"
+ },
+ "MDU6TGFiZWwyNzkwOTgyMTk=": {
+  "color": "ffee88",
+  "name": "topic:editor"
+ },
+ "MDU6TGFiZWwyNzkwOTgyNTU=": {
+  "color": "ffee88",
+  "name": "topic:platforms"
+ },
+ "MDU6TGFiZWwyNzkxMjgwNDQ=": {
+  "color": "aaddaa",
+  "name": "confirmed"
+ },
+ "MDU6TGFiZWwyODM1MTg3MzM=": {
+  "color": "447744",
+  "name": "usability"
+ },
+ "MDU6TGFiZWwyODM1MTg4Mzk=": {
+  "color": "ffddff",
+  "name": "documentation"
+ },
+ "MDU6TGFiZWwyOTA5OTAwODUw": {
+  "color": "ffee88",
+  "name": "topic:export"
+ },
+ "MDU6TGFiZWwzMDcxMzU1MzI=": {
+  "color": "ffee88",
+  "name": "topic:plugin"
+ },
+ "MDU6TGFiZWwzMTE4NTIxMjU=": {
+  "color": "cc9999",
+  "name": "needs work"
+ },
+ "MDU6TGFiZWwzMjQwOTUwMDYw": {
+  "color": "447777",
+  "name": "performance"
+ },
+ "MDU6TGFiZWwzNjE3ODA1NTk=": {
+  "color": "e4e4e4",
+  "name": "platform:uwp"
+ },
+ "MDU6TGFiZWwzNjI0ODM0NzY=": {
+  "color": "ffddcc",
+  "name": "tracker"
+ },
+ "MDU6TGFiZWwzNzA0NzE3OTU=": {
+  "color": "ffee88",
+  "name": "topic:thirdparty"
+ },
+ "MDU6TGFiZWwzNzA0NzE4ODA=": {
+  "color": "ffee88",
+  "name": "topic:physics"
+ },
+ "MDU6TGFiZWwzOTEyMzI5OTU=": {
+  "color": "ffee88",
+  "name": "topic:assetlib"
+ }
+}
