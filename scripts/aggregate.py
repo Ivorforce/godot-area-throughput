@@ -40,6 +40,10 @@ MIN_DECIDED_FOR_CONC = 25    # decisions below which concentration shows a count
 STATUS_LABELS = {"needs testing", "needs work", "discussion", "feature proposal",
                  "for pr meeting"}
 
+# Issue-tracker labels never intentionally applied to PRs; the few PR records
+# carrying them are mislabels, so they are dropped from output entirely.
+ISSUE_LABELS = {"confirmed", "good first issue"}
+
 
 def is_status_label(name):
     return name in STATUS_LABELS
@@ -215,9 +219,11 @@ def build_aggregates(records, last_month, min_label_prs=MIN_LABEL_PRS, now=None)
                 if rec["state"] == "OPEN":
                     a[1] += 1
 
-    # Drop rare labels (typos, one-offs); the pseudo-label always stays.
+    # Drop rare labels (typos, one-offs) and issue-only labels (mislabels);
+    # the pseudo-label always stays.
     kept = {name: L for name, L in labels.items()
-            if name == ALL or L["total"] >= min_label_prs}
+            if name == ALL
+            or (L["total"] >= min_label_prs and name not in ISSUE_LABELS)}
     if any(L["truncated"] for L in kept.values()):
         print(f"WARN: {labels[ALL]['truncated']} records have truncated reviews",
               file=sys.stderr)

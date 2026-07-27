@@ -45,7 +45,8 @@ reviewed by a Godot maintainer. It contains no engine code.
   distort it.
 - The **all** pseudo-label covers every PR, including unlabeled ones.
 - The current partial month is excluded from all series. Labels applied to
-  fewer than 20 PRs all-time are dropped.
+  fewer than 20 PRs all-time are dropped, as are issue-only labels
+  (`confirmed`, `good first issue`) that reach PRs only by mislabeling.
 
 Overview table (from `index.json`, trailing 12 complete months):
 
