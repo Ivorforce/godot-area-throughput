@@ -68,6 +68,35 @@ function labelEntry(name) {
   return indexData.labels.find((l) => l.name === name);
 }
 
+// ---- GitHub search links ----------------------------------------------------
+// Every outbound link points at a queue of open PRs someone could pick up —
+// never at a person's activity record. Only numbers a GitHub search can
+// (approximately) reproduce get linked; the rest stay plain text.
+
+const SEARCH_BASE = "https://github.com/godotengine/godot/pulls?q=";
+
+function searchUrl(terms) {
+  return SEARCH_BASE + encodeURIComponent(terms.join(" "));
+}
+
+function openPrsUrl(label) {
+  const terms = ["is:pr", "is:open"];
+  if (label !== "all") terms.push(`label:"${label}"`);
+  return searchUrl(terms);
+}
+
+// The authors table covers PRs opened in the trailing 12 complete months;
+// mirror that window so the search reproduces the shown count.
+function authorOpenUrl(login, label) {
+  const months = indexData.months;
+  const start = months[Math.max(0, months.length - 12)] + "-01";
+  const [y, m] = months[months.length - 1].split("-").map(Number);
+  const end = new Date(Date.UTC(y, m, 0)).toISOString().slice(0, 10);
+  const terms = ["is:pr", "is:open", `author:${login}`, `created:${start}..${end}`];
+  if (label !== "all") terms.push(`label:"${label}"`);
+  return searchUrl(terms);
+}
+
 // ---- view computation -------------------------------------------------------
 
 function rolling3(arr) {
@@ -252,12 +281,13 @@ function renderTable(tableId, rows, columns) {
   tbody.replaceChildren();
   for (const row of rows) {
     const tr = document.createElement("tr");
-    for (const [i, col] of columns.entries()) {
+    for (const col of columns) {
       const td = document.createElement("td");
       const value = col.fmt ? col.fmt(row) : row[col.key];
-      if (i === 0 && !String(value).startsWith("(")) {
+      const url = col.href && col.href(row);
+      if (url) {
         const a = document.createElement("a");
-        a.href = `https://github.com/${value}`;
+        a.href = url;
         a.textContent = value;
         td.appendChild(a);
       } else {
@@ -290,7 +320,8 @@ const reviewerCols = [
 ];
 const authorCols = [
   { key: "login" },
-  { key: "open", fmt: (r) => `${r.open} (${r.pctOpen}%)` },
+  { key: "open", fmt: (r) => `${r.open} (${r.pctOpen}%)`,
+    href: (r) => r.login.startsWith("(") ? null : authorOpenUrl(r.login, state.label) },
 ];
 const tableRows = { reviewers: { rows: [] }, authors: { rows: [] } };
 
@@ -322,7 +353,15 @@ function updateTables(data) {
 
 const overviewCols = [
   { key: "name", render: (r) => labelPill(r.name) },
-  { key: "openNow" },
+  { key: "openNow", render: (r) => {
+    const a = document.createElement("a");
+    a.href = openPrsUrl(r.name);
+    a.textContent = r.openNow;
+    // Row click selects the label for inspection; the link itself leaves for
+    // GitHub, so keep the two gestures from firing together.
+    a.addEventListener("click", (e) => e.stopPropagation());
+    return a;
+  } },
   { key: "net", render: (r) => {
     const wrap = document.createElement("span");
     const net = document.createElement("strong");
@@ -519,8 +558,13 @@ async function render() {
   writeHash();
   updateCharts(view);
   updateTables(data);
-  document.getElementById("tables-heading").textContent =
-    `Last 12 months — ${state.label}`;
+  const heading = document.getElementById("tables-heading");
+  heading.replaceChildren("Last 12 months — ");
+  const headingLink = document.createElement("a");
+  headingLink.href = openPrsUrl(state.label);
+  headingLink.textContent = state.label;
+  headingLink.title = "Open PRs on GitHub";
+  heading.appendChild(headingLink);
 
   const note = document.getElementById("clamp-note");
   note.hidden = !view.clamped;
