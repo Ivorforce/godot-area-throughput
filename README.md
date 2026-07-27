@@ -62,7 +62,11 @@ Overview table (from `index.json`, trailing 12 complete months):
   near-undecided area is the most starved state, not "no problem". Unmerged
   closes are credited to the closer as decisions, matching the monthly
   *decided* series; merges are not separately credited — the approval is the
-  decision.
+  decision. Authoring is deliberately not counted either, however central
+  someone's own PRs are to an area: decision counts measure the capacity to
+  process incoming PRs, not to write the area's code. Author concentration
+  ("who writes this area") would be a separate metric; the raw store supports
+  it if ever wanted.
 - Labels applied when a PR is closed or merged (`salvageable`, `archived`,
   `spam`, `cherrypick:*`) are excluded from the ranking — their stats describe
   outcomes, not how the area is served. They remain in the selector with full
