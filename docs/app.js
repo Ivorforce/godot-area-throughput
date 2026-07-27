@@ -14,20 +14,20 @@ const COLORS = {
   closed: "#0969da",
 };
 
-// Sediment layers, longest horizon first (drawn bottom-most, painted over by
-// the shorter ones). One-hue ordinal ramp, lightest (top surface) to darkest
-// (bottom band = fastest resolutions).
+// Sediment layers. Chart.js paints dataset 0 last (on top), so the shortest
+// horizon — smallest, darkest band — comes first and ends up covering the
+// bottom of the progressively larger, lighter layers behind it.
 const RES_HORIZONS = [
-  { key: "d960", label: "within 32 months", color: "#86b6ef" },
-  { key: "d480", label: "within 16 months", color: "#6da7ec" },
-  { key: "d240", label: "within 8 months", color: "#5598e7" },
-  { key: "d120", label: "within 4 months", color: "#3987e5" },
-  { key: "d60", label: "within 2 months", color: "#2a78d6" },
-  { key: "d30", label: "within 1 month", color: "#256abf" },
-  { key: "d14", label: "within 2 weeks", color: "#1c5cab" },
-  { key: "d7", label: "within 1 week", color: "#184f95" },
-  { key: "d3", label: "within 3 days", color: "#104281" },
   { key: "d1", label: "within 1 day", color: "#0d366b" },
+  { key: "d3", label: "within 3 days", color: "#104281" },
+  { key: "d7", label: "within 1 week", color: "#184f95" },
+  { key: "d14", label: "within 2 weeks", color: "#1c5cab" },
+  { key: "d30", label: "within 1 month", color: "#256abf" },
+  { key: "d60", label: "within 2 months", color: "#2a78d6" },
+  { key: "d120", label: "within 4 months", color: "#3987e5" },
+  { key: "d240", label: "within 8 months", color: "#5598e7" },
+  { key: "d480", label: "within 16 months", color: "#6da7ec" },
+  { key: "d960", label: "within 32 months", color: "#86b6ef" },
 ];
 
 // ---- state <-> hash ---------------------------------------------------------
@@ -177,8 +177,13 @@ function createCharts() {
         y: { min: 0, max: 100, ticks: { callback: (v) => v + "%" } },
       },
       plugins: {
-        legend: { labels: { boxWidth: 12, font: { size: 11 } } },
-        tooltip: { callbacks: { label: resolutionLabel } },
+        // Longest span first in legend and tooltip, matching the visual
+        // stack top-down (lightest top surface -> darkest bottom band).
+        legend: { reverse: true, labels: { boxWidth: 12, font: { size: 11 } } },
+        tooltip: {
+          itemSort: (a, b) => b.datasetIndex - a.datasetIndex,
+          callbacks: { label: resolutionLabel },
+        },
       },
     }),
   });
