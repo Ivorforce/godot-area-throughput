@@ -53,15 +53,25 @@ Overview table (from `index.json`, trailing 12 complete months):
   enough to judge, pulled toward the all-PRs average (by mixing in 20 phantom
   average-behaving PRs) so labels with very few PRs can't land at the top or
   bottom of the ranking by luck.
-- **top decider**: of the label's PRs that got an approve or changes-requested
-  decision, the share decided by the single most active person; "—" below 10
-  such PRs. Closes are deliberately not counted here (unlike the monthly
-  *decided* series) because the release team closes most PRs as routine
-  cleanup, which would otherwise look like area ownership.
+- **decision concentration**: of the label's PRs that got an approve or
+  changes-requested decision, the share decided by the single most active
+  person, shown with its base ("65% of 17"). Below 25 such PRs the raw count
+  is shown instead, and those rows sort as *most* concentrated — a
+  near-undecided area is the most starved state, not "no problem". Closes are
+  deliberately not counted here (unlike the monthly *decided* series) because
+  the release team closes most PRs as routine cleanup, which would otherwise
+  look like area ownership.
 - Labels applied when a PR is closed or merged (`salvageable`, `archived`,
   `spam`, `cherrypick:*`) are excluded from the ranking — their stats describe
   outcomes, not how the area is served. They remain in the selector with full
-  detail data.
+  detail data. Process/status labels (`needs testing`, `needs work`, …) are
+  listed in a separate "status queues" section without service columns: their
+  resolution stats restate the label's meaning.
+- The per-person tables render alphabetically by default — a roster with
+  counts, not a ranking; magnitude sorts are a header-click away. The Authors
+  table shows only PRs still awaiting a decision (with the share of what the
+  person opened), by design: output counts per person are not this tool's
+  business.
 
 ## How it works
 

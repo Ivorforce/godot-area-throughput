@@ -227,12 +227,12 @@ function makeSortable(tableId, rowsRef, columns) {
   const headers = document.querySelectorAll(`#${tableId} th`);
   headers.forEach((th, i) => {
     th.addEventListener("click", () => {
-      headers.forEach((h) => h.classList.remove("sorted"));
-      th.classList.add("sorted");
       const key = columns[i].key;
-      const rows = [...rowsRef.rows].sort((a, b) =>
-        i === 0 ? String(a[key]).localeCompare(String(b[key])) : b[key] - a[key]);
+      const rows = i === 0
+        ? alphabetical(rowsRef.rows)
+        : [...rowsRef.rows].sort((a, b) => b[key] - a[key]);
       renderTable(tableId, rows, columns);
+      markSorted(tableId, i, i === 0);
     });
   });
 }
@@ -243,15 +243,33 @@ const reviewerCols = [
   { key: "decided", fmt: (r) => `${r.decided} (${r.pctOfDecided}%)` },
 ];
 const authorCols = [
-  { key: "login" }, { key: "opened" }, { key: "closed" }, { key: "open" },
+  { key: "login" },
+  { key: "open", fmt: (r) => `${r.open} (${r.pctOpen}%)` },
 ];
 const tableRows = { reviewers: { rows: [] }, authors: { rows: [] } };
+
+// Default order is alphabetical: a roster with counts, not a pecking order.
+// Magnitude sorts stay one header-click away. The "(N others)" row stays last.
+function alphabetical(rows) {
+  const people = rows.filter((r) => !r.login.startsWith("("));
+  const rest = rows.filter((r) => r.login.startsWith("("));
+  return people.sort((a, b) => a.login.localeCompare(b.login)).concat(rest);
+}
+
+function markSorted(tableId, index, asc) {
+  document.querySelectorAll(`#${tableId} th`).forEach((th, i) => {
+    th.classList.toggle("sorted", i === index);
+    th.classList.toggle("asc", i === index && asc);
+  });
+}
 
 function updateTables(data) {
   tableRows.reviewers.rows = data.reviewers12m;
   tableRows.authors.rows = data.authors12m;
-  renderTable("reviewers-table", data.reviewers12m, reviewerCols);
-  renderTable("authors-table", data.authors12m, authorCols);
+  renderTable("reviewers-table", alphabetical(data.reviewers12m), reviewerCols);
+  renderTable("authors-table", alphabetical(data.authors12m), authorCols);
+  markSorted("reviewers-table", 0, true);
+  markSorted("authors-table", 0, true);
 }
 
 // ---- overview ---------------------------------------------------------------
@@ -271,16 +289,32 @@ const overviewCols = [
     return wrap;
   } },
   { key: "res60", fmt: (r) => (r.res60 === null ? "—" : r.res60 + "%") },
-  { key: "topDecider", fmt: (r) => (r.topDecider === null ? "—" : r.topDecider + "%") },
+  { key: "topDecider", render: (r) => {
+    const span = document.createElement("span");
+    if (r.topDecider === null) {
+      // Too few decisions to judge concentration — the most starved state,
+      // surfaced instead of hidden behind a dash.
+      span.textContent = `only ${r.topDeciderN} decision${r.topDeciderN === 1 ? "" : "s"}`;
+      span.style.color = "#9a6700";
+    } else {
+      span.textContent = `${r.topDecider}% of ${r.topDeciderN}`;
+    }
+    return span;
+  } },
 ];
 const ovSort = { key: "res60", asc: true };
 let ovRows = [];
 
 function sortedOvRows() {
   const { key, asc } = ovSort;
+  // Starved rows (no concentration %) sort as maximal concentration: near-zero
+  // decisions is the extreme of fragility, not its absence.
+  const value = (r) =>
+    key === "topDecider" && r[key] === null ? Infinity : r[key];
   return [...ovRows].sort((a, b) => {
-    if (a[key] === null || b[key] === null) return (a[key] === null) - (b[key] === null);
-    const cmp = key === "name" ? a.name.localeCompare(b.name) : a[key] - b[key];
+    const [va, vb] = [value(a), value(b)];
+    if (va === null || vb === null) return (va === null) - (vb === null);
+    const cmp = key === "name" ? a.name.localeCompare(b.name) : va - vb;
     return asc ? cmp : -cmp;
   });
 }
@@ -325,10 +359,37 @@ function renderOverview() {
   });
 }
 
+function renderStatusTable(rows) {
+  const tbody = document.querySelector("#status-table tbody");
+  tbody.replaceChildren();
+  for (const row of rows.sort((a, b) => b.openNow - a.openNow)) {
+    const tr = document.createElement("tr");
+    tr.addEventListener("click", () => {
+      state.label = row.name;
+      render();
+      document.querySelector(".controls").scrollIntoView({ behavior: "smooth" });
+    });
+    for (const col of overviewCols.slice(0, 3)) {
+      const td = document.createElement("td");
+      if (col.render) {
+        td.appendChild(col.render(row));
+      } else {
+        td.textContent = col.fmt ? col.fmt(row) : row[col.key];
+      }
+      tr.appendChild(td);
+    }
+    tbody.appendChild(tr);
+  }
+}
+
 function initOverview() {
   // Outcome-applied labels (salvageable, cherrypick:*, ...) get their label at
   // close/merge time; their cohort stats would pollute a service-quality ranking.
-  ovRows = indexData.labels.filter((e) => !e.outcome).map((e) =>
+  // Status labels mark a PR's state, not an area — listed separately, without
+  // service columns, since their resolution restates the label's meaning.
+  renderStatusTable(indexData.labels.filter((e) => e.status && !e.outcome)
+    .map((e) => Object.assign({ net: e.opened12 - e.closed12 }, e)));
+  ovRows = indexData.labels.filter((e) => !e.outcome && !e.status).map((e) =>
     Object.assign({ net: e.opened12 - e.closed12 }, e));
   document.querySelectorAll("#overview-table th").forEach((th, i) => {
     th.addEventListener("click", () => {
@@ -412,6 +473,8 @@ async function render() {
   writeHash();
   updateCharts(view);
   updateTables(data);
+  document.getElementById("tables-heading").textContent =
+    `Last 12 months — ${state.label}`;
 
   const note = document.getElementById("clamp-note");
   note.hidden = !view.clamped;

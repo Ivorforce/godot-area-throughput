@@ -29,7 +29,18 @@ TABLE_MONTHS = 12            # trailing window for reviewer/author tables
 TABLE_ROWS = 30
 HORIZONS = (7, 60, 365)      # resolution-rate horizons, in days (~logarithmic)
 RES60_PRIOR = 20             # pseudo-PRs pulling small labels' res60 toward the mean
-MIN_DECIDED_FOR_CONC = 10    # decisions below which reviewer concentration is unjudged
+MIN_DECIDED_FOR_CONC = 25    # decisions below which concentration shows a count, not a %
+
+# Process/status labels mark a PR's state, not an area of the codebase. Their
+# resolution stats restate the label's meaning ("needs work" PRs stall — that
+# is why the label is there), so the overview lists them separately, without
+# service columns.
+STATUS_LABELS = {"needs testing", "needs work", "discussion", "feature proposal",
+                 "for pr meeting"}
+
+
+def is_status_label(name):
+    return name in STATUS_LABELS
 
 # Labels applied as part of an outcome (at close/merge), not at triage. Their
 # cohort stats are conditioned on the outcome having happened, so they are
@@ -110,9 +121,8 @@ def build_aggregates(records, last_month, min_label_prs=MIN_LABEL_PRS, now=None)
             "rev12": defaultdict(set),             # reviewer -> pr numbers in window
             "dec12": defaultdict(set),             # reviewer -> pr numbers with verdict
             "reviewed12": set(), "decided12": set(),
-            "auth12": defaultdict(lambda: [0, 0, 0]),  # author -> [opened, closed,
-                                                       #   stillOpen]; cohort: PRs
-                                                       #   opened in the window
+            "auth12": defaultdict(lambda: [0, 0]),  # author -> [opened, stillOpen];
+                                                    #   cohort: PRs opened in window
         }
 
     labels = defaultdict(blank)
@@ -195,8 +205,6 @@ def build_aggregates(records, last_month, min_label_prs=MIN_LABEL_PRS, now=None)
                 a = L["auth12"][author_key]
                 a[0] += 1
                 if rec["state"] == "OPEN":
-                    a[2] += 1
-                else:
                     a[1] += 1
 
     # Drop rare labels (typos, one-offs); the pseudo-label always stays.
@@ -270,6 +278,8 @@ def build_aggregates(records, last_month, min_label_prs=MIN_LABEL_PRS, now=None)
 
         # Share of the area's decided PRs carried by its most active decider.
         # Fragility, not service quality: high = the area hangs on one person.
+        # Below the threshold the page shows the raw count instead of a share —
+        # a near-undecided area is the most starved state, not "no problem".
         decided_total = len(L["decided12"])
         top_decider = (round(100 * max(len(s) for s in L["dec12"].values())
                              / decided_total, 1)
@@ -278,6 +288,7 @@ def build_aggregates(records, last_month, min_label_prs=MIN_LABEL_PRS, now=None)
         elig_opened = sum(L["opened"][i] for i in elig60)
         summaries[name] = {
             "topDecider": top_decider,
+            "topDeciderN": decided_total,
             "opened12": sum(L["opened"][window_start:]),
             "closed12": sum(L["merged"][i] + L["closedUnmerged"][i]
                             for i in range(window_start, n)),
@@ -287,11 +298,11 @@ def build_aggregates(records, last_month, min_label_prs=MIN_LABEL_PRS, now=None)
                       if elig_opened else None),
         }
 
-        auth_rows = sorted(([k] + v for k, v in L["auth12"].items()),
+        auth_rows = sorted(([k, s, o] for k, (o, s) in L["auth12"].items() if s),
                            key=lambda r: (-r[1], r[0]))
         authors12m = [
-            {"login": k, "opened": o, "closed": c, "open": s}
-            for k, o, c, s in table(auth_rows, "others")]
+            {"login": k, "open": s, "opened": o, "pctOpen": pct(s, o)}
+            for k, s, o in table(auth_rows, "others")]
 
         label_files[slugs[name]] = {
             "label": name,
@@ -319,7 +330,8 @@ def build_aggregates(records, last_month, min_label_prs=MIN_LABEL_PRS, now=None)
     index_labels = sorted(
         ({"name": name, "file": f"labels/{slugs[name]}.json", "group": group(name),
           "firstSeen": L["firstSeen"], "openNow": L["openNow"], "total": L["total"],
-          "outcome": is_outcome_label(name), **summaries[name]}
+          "outcome": is_outcome_label(name), "status": is_status_label(name),
+          **summaries[name]}
          for name, L in kept.items() if L["firstSeen"] is not None),
         key=lambda e: (order[e["group"]], e["name"]))
 

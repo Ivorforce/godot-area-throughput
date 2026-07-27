@@ -78,13 +78,16 @@ class TestAggregate(unittest.TestCase):
 
     def test_author_table(self):
         core = {r["login"]: r for r in self.core["authors12m"]}
-        self.assertEqual(core["alice"], {"login": "alice", "opened": 2, "closed": 0, "open": 2})
-        self.assertEqual(core["bob"], {"login": "bob", "opened": 2, "closed": 1, "open": 1})
-        self.assertEqual(core["dave"], {"login": "dave", "opened": 1, "closed": 1, "open": 0})
-        self.assertEqual(core["(deleted)"]["opened"], 1)        # ghost author
+        self.assertEqual(core["alice"],
+                         {"login": "alice", "open": 2, "opened": 2, "pctOpen": 100.0})
+        self.assertEqual(core["bob"],
+                         {"login": "bob", "open": 1, "opened": 2, "pctOpen": 50.0})
+        self.assertNotIn("dave", core)          # nothing still open -> no row
+        self.assertEqual(core["(deleted)"]["open"], 1)          # ghost author
         gui = {r["login"]: r for r in self.result["labels"]["topic-gui"]["authors12m"]}
-        self.assertEqual(gui["carol"], {"login": "carol", "opened": 1, "closed": 1, "open": 0})
-        self.assertEqual(gui["alice"], {"login": "alice", "opened": 1, "closed": 1, "open": 0})
+        self.assertNotIn("carol", gui)          # merged
+        self.assertNotIn("alice", gui)          # withdrawn
+        self.assertEqual(gui["gina"]["open"], 1)
 
     def test_all_pseudo_label(self):
         self.assertEqual(self.all["opened"], [3, 3, 2, 1, 1, 0])
@@ -104,6 +107,7 @@ class TestAggregate(unittest.TestCase):
         # with 20 pseudo-PRs: (2 + 20*0.4) / (8 + 20) = 35.7%.
         self.assertEqual(entry["res60"], 35.7)
         self.assertIsNone(entry["topDecider"])  # only 2 decisions in window
+        self.assertEqual(entry["topDeciderN"], 2)
 
     def test_top_decider(self):
         original = aggregate.MIN_DECIDED_FOR_CONC
@@ -137,6 +141,8 @@ class TestAggregate(unittest.TestCase):
         self.assertTrue(aggregate.is_outcome_label("salvageable"))
         self.assertTrue(aggregate.is_outcome_label("cherrypick:4.6"))
         self.assertFalse(aggregate.is_outcome_label("topic:core"))
+        self.assertTrue(aggregate.is_status_label("needs testing"))
+        self.assertFalse(aggregate.is_status_label("topic:core"))
         flags = {l["name"]: l["outcome"] for l in self.result["index"]["labels"]}
         self.assertFalse(any(flags.values()))  # fixture has no outcome labels
 

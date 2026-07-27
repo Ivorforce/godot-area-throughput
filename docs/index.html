@@ -47,8 +47,9 @@
   details summary {
     cursor: pointer; font-weight: 600; font-size: 1.1rem; margin-bottom: .5rem;
   }
-  #overview-table tbody tr { cursor: pointer; }
-  #overview-table tbody tr:hover td { background: #f6f8fa; }
+  #overview-table tbody tr, #status-table tbody tr { cursor: pointer; }
+  #overview-table tbody tr:hover td, #status-table tbody tr:hover td { background: #f6f8fa; }
+  details h3 { margin: 1.25rem 0 .25rem; font-size: 1rem; }
   .label-pill {
     display: inline-block; padding: 0 8px; border-radius: 2em;
     font-size: .8rem; font-weight: 500; line-height: 19px; white-space: nowrap;
@@ -84,7 +85,7 @@ volunteers donating their time.</p>
   <summary>Overview — all labels</summary>
   <table id="overview-table">
     <thead><tr>
-      <th>label</th><th>open</th><th>net 12m</th><th>resolved ≤60d</th><th>top decider</th>
+      <th>label</th><th>open</th><th>net 12m</th><th>resolved ≤60d</th><th>decision concentration</th>
     </tr></thead>
     <tbody></tbody>
   </table>
@@ -96,14 +97,24 @@ volunteers donating their time.</p>
     <dd>Share of the label's PRs closed within 60 days, over the last judgeable year.
         Small labels are pulled toward the average so they can't top either end by
         luck.</dd>
-    <dt>top decider</dt>
-    <dd>Share of the label's decisions made by its single most active person
-        (— = fewer than 10 decisions). High = fragility, not poor service: the area
-        works, but hangs on one person.</dd>
+    <dt>decision concentration</dt>
+    <dd>Share of the label's decisions made by its single most active person. High =
+        the area runs on one person's donated time — a debt the project owes them,
+        not a problem they cause. Areas with too few decisions to judge show the raw
+        count instead: near-undecided is the most starved state of all.</dd>
   </dl>
   <p class="caption">Sorted worst-served first; click a column to re-sort, a row to
   inspect that label below. Labels applied when a PR is closed or merged
   (salvageable, cherrypick:*, …) describe outcomes, not service, and aren't ranked.</p>
+
+  <h3>Status queues</h3>
+  <table id="status-table">
+    <thead><tr><th>label</th><th>open</th><th>net 12m</th></tr></thead>
+    <tbody></tbody>
+  </table>
+  <p class="caption">Process labels mark a PR's state, not an area — resolution here
+  reflects why the label is applied, not how an area is served, so they aren't
+  ranked above.</p>
 </details>
 
 <div class="controls">
@@ -133,31 +144,32 @@ tooltip shows each point's counts. Lines stop before the present on purpose: a m
 that hasn't yet had its full window would only show the quick closes and look faster
 than it is.</p>
 
-<h2>Last 12 months</h2>
+<h2 id="tables-heading">Last 12 months</h2>
+<p class="caption">Contribution counts by volunteers — not performance, not a ranking.
+A one-line comment and a week-long review count the same; review depth, triage,
+mentoring, and work outside PR reviews are invisible here. Where one person carries
+most decisions, that is capacity the project owes them, not a problem they cause.</p>
 <div class="tables">
   <div>
     <h3>Reviewers</h3>
+    <p class="caption">Volunteered review activity in this area, alphabetical —
+    counts, not a ranking. Percentages are the person's share of the area's
+    reviews / decisions.</p>
     <table id="reviewers-table">
       <thead><tr>
-        <th>reviewer</th><th>reviewed</th><th>decided</th>
+        <th>reviewer</th><th>reviewed (any review)</th><th>decided (approve&thinsp;/&thinsp;req. changes)</th>
       </tr></thead>
       <tbody></tbody>
     </table>
-    <dl class="defs">
-      <dt>reviewed</dt>
-      <dd>PRs the person left a review on — a quick comment counts the same as a
-          deep review pass.</dd>
-      <dt>decided</dt>
-      <dd>The subset where they approved or requested changes.</dd>
-    </dl>
-    <p class="caption">Percentages are the person's share of everything reviewed /
-    decided in this area over the last 12 months.</p>
   </div>
   <div>
     <h3>Authors</h3>
+    <p class="caption">PRs still waiting for a decision, per author, with the share
+    of what they opened in the last 12 months. A large number usually reflects the
+    area's review capacity, not the author — check the Flow chart above.</p>
     <table id="authors-table">
       <thead><tr>
-        <th>author</th><th>opened</th><th>closed</th><th>still open</th>
+        <th>author</th><th>still open (of opened)</th>
       </tr></thead>
       <tbody></tbody>
     </table>
