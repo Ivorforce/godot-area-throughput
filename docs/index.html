@@ -158,7 +158,7 @@ most decisions, that is capacity the project owes them, not a problem they cause
     reviews / decisions.</p>
     <table id="reviewers-table">
       <thead><tr>
-        <th>reviewer</th><th>reviewed (any review)</th><th>decided (approve&thinsp;/&thinsp;req. changes)</th>
+        <th>reviewer</th><th>reviewed (any review)</th><th>decided (approve&thinsp;/&thinsp;req. changes&thinsp;/&thinsp;close)</th>
       </tr></thead>
       <tbody></tbody>
     </table>
@@ -195,9 +195,9 @@ most decisions, that is capacity the project owes them, not a problem they cause
     <li>The 3-mo average on the resolution chart combines the three months' PRs into
         one pool and computes the rate over that pool — averaging three percentages
         would let a tiny month count as much as a busy one.</li>
-    <li>Top decider counts only approve / changes-requested decisions, never closes:
-        the release team closes most PRs as routine cleanup, which would otherwise
-        look like area ownership.</li>
+    <li>Decisions credited to a person are approvals, change requests, and closing
+        someone else's PR unmerged. Merging is not separately credited — the release
+        team merges what reviewers approved, so the approval is the decision.</li>
     <li>Draft PRs count as opened; bot reviews and authors' replies to review threads
         are excluded everywhere.</li>
     <li>The current partial month is excluded from all series.</li>

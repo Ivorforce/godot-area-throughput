@@ -57,10 +57,10 @@ Overview table (from `index.json`, trailing 12 complete months):
   changes-requested decision, the share decided by the single most active
   person, shown with its base ("65% of 17"). Below 25 such PRs the raw count
   is shown instead, and those rows sort as *most* concentrated — a
-  near-undecided area is the most starved state, not "no problem". Closes are
-  deliberately not counted here (unlike the monthly *decided* series) because
-  the release team closes most PRs as routine cleanup, which would otherwise
-  look like area ownership.
+  near-undecided area is the most starved state, not "no problem". Unmerged
+  closes are credited to the closer as decisions, matching the monthly
+  *decided* series; merges are not separately credited — the approval is the
+  decision.
 - Labels applied when a PR is closed or merged (`salvageable`, `archived`,
   `spam`, `cherrypick:*`) are excluded from the ranking — their stats describe
   outcomes, not how the area is served. They remain in the selector with full

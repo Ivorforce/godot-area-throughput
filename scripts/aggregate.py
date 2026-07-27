@@ -147,14 +147,17 @@ def build_aggregates(records, last_month, min_label_prs=MIN_LABEL_PRS, now=None)
                 dec_months.add(i)
             sub_counts[i] += 1
 
-        # A non-author, non-bot closing a PR unmerged is a decision too.
-        # Includes the release team's janitorial closes (superseded, stale) —
-        # not distinguishable from technical rejections without role knowledge.
+        # A non-author, non-bot closing a PR unmerged is a decision too, and is
+        # credited to the closer. Merges are not separately credited: in this
+        # workflow the release team merges what reviewers approved — the
+        # approval is the decision.
         closer = rec.get("closedBy")
+        close_decider = None
         if (rec["state"] == "CLOSED" and closed_i is not None and closer
                 and closer != rec["author"]
                 and not is_bot(closer, rec.get("closedByType"))):
             dec_months.add(closed_i)
+            close_decider = closer
 
         for name in set(rec["labels"]) | {ALL}:
             L = labels[name]
@@ -201,6 +204,9 @@ def build_aggregates(records, last_month, min_label_prs=MIN_LABEL_PRS, now=None)
                     if r["s"] in ("APPROVED", "CHANGES_REQUESTED"):
                         L["dec12"][key].add(rec["number"])
                         L["decided12"].add(rec["number"])
+            if close_decider and closed_i >= window_start:
+                L["dec12"][close_decider].add(rec["number"])
+                L["decided12"].add(rec["number"])
             if created_i >= window_start:
                 a = L["auth12"][author_key]
                 a[0] += 1
@@ -267,8 +273,11 @@ def build_aggregates(records, last_month, min_label_prs=MIN_LABEL_PRS, now=None)
                 head.append([f"({len(rest)} others)"] + summed)
             return head
 
-        rev_rows = sorted(([k, len(v), len(L["dec12"].get(k, ()))]
-                           for k, v in L["rev12"].items()),
+        # Union of reviewers and closers: someone can decide (by closing)
+        # without ever having left a review.
+        people = set(L["rev12"]) | set(L["dec12"])
+        rev_rows = sorted(([k, len(L["rev12"].get(k, ())), len(L["dec12"].get(k, ()))]
+                           for k in people),
                           key=lambda r: (-r[2], -r[1], r[0]))
         reviewed12, decided12 = len(L["reviewed12"]), len(L["decided12"])
         reviewers12m = [

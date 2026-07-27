@@ -69,12 +69,12 @@ class TestAggregate(unittest.TestCase):
         rows = {r["login"]: r for r in self.core["reviewers12m"]}
         self.assertEqual(rows["carol"]["prs"], 2)
         self.assertEqual(rows["carol"]["decided"], 1)   # approved PR4
-        self.assertEqual(rows["erin"]["decided"], 1)    # changes-requested PR9
+        self.assertEqual(rows["erin"]["decided"], 2)    # CR on PR9, closed PR6
+        self.assertEqual(rows["erin"]["prs"], 1)        # closing is not reviewing
         self.assertEqual(rows["(deleted)"]["decided"], 0)
         self.assertEqual(rows["carol"]["pctOfReviewed"], 50.0)  # of {4,6,7,9}
-        self.assertEqual(rows["carol"]["pctOfDecided"], 50.0)   # of {4,9}
+        self.assertEqual(rows["carol"]["pctOfDecided"], 33.3)   # of {4,6,9}
         self.assertEqual(rows["(deleted)"]["prs"], 1)           # ghost reviewer
-        self.assertEqual(rows["erin"]["prs"], 1)
 
     def test_author_table(self):
         core = {r["login"]: r for r in self.core["authors12m"]}
@@ -106,8 +106,8 @@ class TestAggregate(unittest.TestCase):
         # Raw: 2 of 8 within 60d; shrunk toward the global rate p0 = 4/10
         # with 20 pseudo-PRs: (2 + 20*0.4) / (8 + 20) = 35.7%.
         self.assertEqual(entry["res60"], 35.7)
-        self.assertIsNone(entry["topDecider"])  # only 2 decisions in window
-        self.assertEqual(entry["topDeciderN"], 2)
+        self.assertIsNone(entry["topDecider"])  # only 3 decisions in window
+        self.assertEqual(entry["topDeciderN"], 3)  # PR4 approved, PR9 CR, PR6 closed
 
     def test_top_decider(self):
         original = aggregate.MIN_DECIDED_FOR_CONC
@@ -119,8 +119,8 @@ class TestAggregate(unittest.TestCase):
             aggregate.MIN_DECIDED_FOR_CONC = original
         entry = next(l for l in result["index"]["labels"]
                      if l["name"] == "topic:core")
-        # carol and erin decided one of the two decided PRs each.
-        self.assertEqual(entry["topDecider"], 50.0)
+        # erin decided 2 (CR on PR9, closed PR6) of 3 decided PRs.
+        self.assertEqual(entry["topDecider"], 66.7)
 
     def test_partial_month_pr_off_axis_but_in_totals(self):
         entry = next(l for l in self.result["index"]["labels"]
