@@ -1,0 +1,45 @@
+name: update
+
+on:
+  schedule:
+    - cron: "17 4 2 * *"   # 04:17 UTC on the 2nd of each month
+  workflow_dispatch: {}
+
+concurrency:
+  group: update
+  cancel-in-progress: false
+
+permissions:
+  contents: write
+
+jobs:
+  update:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    env:
+      GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - run: python3 -m unittest discover tests
+
+      - run: python3 scripts/fetch.py incremental
+
+      - run: python3 scripts/aggregate.py
+
+      - name: commit & push
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add data docs/data
+          if git diff --cached --quiet; then
+            echo "no changes"
+          else
+            git commit -m "data: monthly update $(date -u +%Y-%m-%d)"
+            git push
+          fi
+
+      # Pushes made with GITHUB_TOKEN do not trigger the branch-based Pages
+      # build; request one explicitly. 409 = a build is already queued.
+      - name: trigger Pages build
+        run: gh api -X POST "repos/${GITHUB_REPOSITORY}/pages/builds" || true

@@ -1,0 +1,202 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Godot PR review throughput</title>
+<style>
+  :root { color-scheme: light; }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0 auto; padding: 1.5rem 1rem 3rem; max-width: 960px;
+    font: 15px/1.5 -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+    color: #24292f; background: #fff;
+  }
+  h1 { font-size: 1.5rem; margin: 0 0 .25rem; }
+  h2 { font-size: 1.1rem; margin: 2rem 0 .25rem; }
+  a { color: #0969da; text-decoration: none; }
+  a:hover { text-decoration: underline; }
+  .meta { color: #57606a; margin-bottom: 1.25rem; }
+  .controls {
+    display: flex; flex-wrap: wrap; align-items: center; gap: .75rem;
+    padding: .6rem .75rem; background: #f6f8fa; border: 1px solid #d0d7de;
+    border-radius: 6px; position: sticky; top: 0; z-index: 2;
+  }
+  .controls select { font: inherit; padding: .15rem .3rem; max-width: 20rem; }
+  .range-group button {
+    font: inherit; padding: .15rem .6rem; border: 1px solid #d0d7de;
+    background: #fff; cursor: pointer;
+  }
+  .range-group button:first-child { border-radius: 6px 0 0 6px; }
+  .range-group button:last-child { border-radius: 0 6px 6px 0; }
+  .range-group button + button { border-left: none; }
+  .range-group button[aria-pressed="true"] { background: #0969da; color: #fff; border-color: #0969da; }
+  .clamp-note { color: #9a6700; font-size: .85rem; }
+  .caption { color: #57606a; font-size: .85rem; margin: .25rem 0 0; }
+  .chart-box { position: relative; height: 300px; margin-top: .5rem; }
+  .chart-box.tall { height: 340px; }
+  .tables { display: flex; flex-wrap: wrap; gap: 2rem; align-items: flex-start; }
+  .tables > div { flex: 1 1 24rem; }
+  table { border-collapse: collapse; width: 100%; font-size: .9rem; }
+  th, td { text-align: right; padding: .25rem .5rem; border-bottom: 1px solid #d8dee4; }
+  th:first-child, td:first-child { text-align: left; }
+  th { cursor: pointer; user-select: none; background: #f6f8fa; white-space: nowrap; }
+  th.sorted::after { content: " ▾"; color: #57606a; }
+  th.sorted.asc::after { content: " ▴"; }
+  details { margin-bottom: 1.5rem; }
+  details summary {
+    cursor: pointer; font-weight: 600; font-size: 1.1rem; margin-bottom: .5rem;
+  }
+  #overview-table tbody tr { cursor: pointer; }
+  #overview-table tbody tr:hover td { background: #f6f8fa; }
+  .label-pill {
+    display: inline-block; padding: 0 8px; border-radius: 2em;
+    font-size: .8rem; font-weight: 500; line-height: 19px; white-space: nowrap;
+  }
+  dl.defs {
+    display: grid; grid-template-columns: max-content 1fr; gap: .15rem .75rem;
+    margin: .5rem 0 0; font-size: .85rem; color: #57606a;
+  }
+  dl.defs dt { font-weight: 600; color: #24292f; }
+  dl.defs dd { margin: 0; }
+  #error { color: #cf222e; font-weight: 600; }
+  footer { margin-top: 3rem; border-top: 1px solid #d0d7de; padding-top: 1rem;
+           color: #57606a; font-size: .9rem; }
+  footer li { margin-bottom: .35rem; }
+</style>
+</head>
+<body>
+
+<h1>Godot PR review throughput</h1>
+<p class="meta">
+  <a href="https://github.com/godotengine/godot">godotengine/godot</a>
+  · data through <span id="data-through">…</span>
+  · updated <span id="updated">…</span>
+  · <a href="#caveats">caveats</a>
+</p>
+<p class="meta">Aggregated from public GitHub data to show where review capacity lags
+behind incoming PRs. It measures area throughput, not individual performance — the
+tables count contributions made, never obligations, and most contributors are
+volunteers donating their time.</p>
+<p id="error" hidden></p>
+
+<details id="overview" open>
+  <summary>Overview — all labels</summary>
+  <table id="overview-table">
+    <thead><tr>
+      <th>label</th><th>open</th><th>net 12m</th><th>resolved ≤60d</th><th>top decider</th>
+    </tr></thead>
+    <tbody></tbody>
+  </table>
+  <dl class="defs">
+    <dt>net 12m</dt>
+    <dd><strong style="color:#cf222e">+59</strong> of 125 = 125 PRs came in over the
+        last 12 months, and the pile grew by 59.</dd>
+    <dt>resolved ≤60d</dt>
+    <dd>Share of the label's PRs closed within 60 days, over the last judgeable year.
+        Small labels are pulled toward the average so they can't top either end by
+        luck.</dd>
+    <dt>top decider</dt>
+    <dd>Share of the label's decisions made by its single most active person
+        (— = fewer than 10 decisions). High = fragility, not poor service: the area
+        works, but hangs on one person.</dd>
+  </dl>
+  <p class="caption">Sorted worst-served first; click a column to re-sort, a row to
+  inspect that label below. Labels applied when a PR is closed or merged
+  (salvageable, cherrypick:*, …) describe outcomes, not service, and aren't ranked.</p>
+</details>
+
+<div class="controls">
+  <select id="label-select" aria-label="Label"></select>
+  <span class="range-group" role="group" aria-label="Range">
+    <button data-range="24" aria-pressed="true">24 mo</button>
+    <button data-range="60" aria-pressed="false">5 yr</button>
+    <button data-range="all" aria-pressed="false">all</button>
+  </span>
+  <label><input type="checkbox" id="avg-toggle"> 3-mo average</label>
+  <span class="clamp-note" id="clamp-note" hidden></span>
+</div>
+
+<h2>Flow</h2>
+<div class="chart-box"><canvas id="chart-flow"></canvas></div>
+<p class="caption">PRs opened vs PRs closed (merged or not) per month. The band between
+the lines is the monthly imbalance: red while more opens than closes (backlog growing),
+green while closing outpaces opening (backlog shrinking). Hover for the exact net.</p>
+
+<h2>Resolution rate</h2>
+<div class="chart-box"><canvas id="chart-resolution"></canvas></div>
+<p class="caption">Of the PRs opened each month, the share closed — merged or not —
+within a week, two months, or a year. A sinking line means newer PRs wait longer for a
+decision. These are shares, not volumes: they can sink even while total closes grow,
+if intake grows faster — the Flow chart above has the absolute numbers, and the
+tooltip shows each point's counts. Lines stop before the present on purpose: a month
+that hasn't yet had its full window would only show the quick closes and look faster
+than it is.</p>
+
+<h2>Last 12 months</h2>
+<div class="tables">
+  <div>
+    <h3>Reviewers</h3>
+    <table id="reviewers-table">
+      <thead><tr>
+        <th>reviewer</th><th>reviewed</th><th>decided</th>
+      </tr></thead>
+      <tbody></tbody>
+    </table>
+    <dl class="defs">
+      <dt>reviewed</dt>
+      <dd>PRs the person left a review on — a quick comment counts the same as a
+          deep review pass.</dd>
+      <dt>decided</dt>
+      <dd>The subset where they approved or requested changes.</dd>
+    </dl>
+    <p class="caption">Percentages are the person's share of everything reviewed /
+    decided in this area over the last 12 months.</p>
+  </div>
+  <div>
+    <h3>Authors</h3>
+    <table id="authors-table">
+      <thead><tr>
+        <th>author</th><th>opened</th><th>closed</th><th>still open</th>
+      </tr></thead>
+      <tbody></tbody>
+    </table>
+  </div>
+</div>
+
+<footer id="caveats">
+  <strong>Caveats</strong>
+  <ul>
+    <li>Labels are read as they are today. Renamed labels keep their full history
+        (they're tracked by ID); deleted labels keep their last-known name; each
+        label's charts start at its first-ever PR.</li>
+    <li>These are throughput statistics, not performance reviews. They cannot see
+        review depth, mentoring, design discussions, issue triage, or any work
+        outside PR reviews — comparing individuals by these numbers alone
+        misreads what they measure.</li>
+    <li>All series apply today's labels to yesterday's PRs — treat early history
+        as an approximation.</li>
+    <li>Resolution-rate lines stop before the present on purpose: a month that hasn't
+        yet had the full 7/60/365 days isn't shown at all, rather than shown
+        misleadingly fast.</li>
+    <li>The 3-mo average on the resolution chart combines the three months' PRs into
+        one pool and computes the rate over that pool — averaging three percentages
+        would let a tiny month count as much as a busy one.</li>
+    <li>Top decider counts only approve / changes-requested decisions, never closes:
+        the release team closes most PRs as routine cleanup, which would otherwise
+        look like area ownership.</li>
+    <li>Draft PRs count as opened; bot reviews and authors' replies to review threads
+        are excluded everywhere.</li>
+    <li>The current partial month is excluded from all series.</li>
+    <li>Post-merge reviews count in the month they were submitted, so
+        <em>reviewed</em> can slightly lag <em>merged</em>.</li>
+  </ul>
+  <p>Data updates monthly via GitHub Actions.
+     Raw data and scripts live in this page's repository;
+     aggregates are at <a href="data/index.json">data/index.json</a>.</p>
+</footer>
+
+<script src="vendor/chart.umd.min.js"></script>
+<script src="app.js"></script>
+</body>
+</html>
