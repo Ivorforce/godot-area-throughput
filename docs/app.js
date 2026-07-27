@@ -12,10 +12,23 @@ const charts = {};
 const COLORS = {
   opened: "#8c959f",
   closed: "#0969da",
-  res7: "#54aeff",
-  res60: "#0969da",
-  res365: "#033d8b",
 };
+
+// Sediment layers, longest horizon first (drawn bottom-most, painted over by
+// the shorter ones). One-hue ordinal ramp, lightest (top surface) to darkest
+// (bottom band = fastest resolutions).
+const RES_HORIZONS = [
+  { key: "d960", label: "within 32 months", color: "#86b6ef" },
+  { key: "d480", label: "within 16 months", color: "#6da7ec" },
+  { key: "d240", label: "within 8 months", color: "#5598e7" },
+  { key: "d120", label: "within 4 months", color: "#3987e5" },
+  { key: "d60", label: "within 2 months", color: "#2a78d6" },
+  { key: "d30", label: "within 1 month", color: "#256abf" },
+  { key: "d14", label: "within 2 weeks", color: "#1c5cab" },
+  { key: "d7", label: "within 1 week", color: "#184f95" },
+  { key: "d3", label: "within 3 days", color: "#104281" },
+  { key: "d1", label: "within 1 day", color: "#0d366b" },
+];
 
 // ---- state <-> hash ---------------------------------------------------------
 
@@ -82,9 +95,8 @@ function computeView(data) {
     firstSeen: data.firstSeen,
     opened: series(data.opened),
     closed: series(data.merged.map((v, i) => v + data.closedUnmerged[i])),
-    res7: resolutionSeries(data, "d7", slice),
-    res60: resolutionSeries(data, "d60", slice),
-    res365: resolutionSeries(data, "d365", slice),
+    res: Object.fromEntries(RES_HORIZONS.map((h) =>
+      [h.key, resolutionSeries(data, h.key, slice)])),
   };
 }
 
@@ -148,17 +160,24 @@ function createCharts() {
 
   charts.resolution = new Chart(document.getElementById("chart-resolution"), {
     type: "line",
-    data: { labels: [], datasets: [
-      line("closed within 1 week", COLORS.res7),
-      line("closed within 2 months", COLORS.res60),
-      line("closed within 1 year", COLORS.res365),
-    ]},
+    data: { labels: [], datasets: RES_HORIZONS.map((h) => ({
+      label: h.label,
+      backgroundColor: h.color,
+      fill: "origin",
+      borderColor: "#fff",
+      borderWidth: 1,
+      pointRadius: 0,
+      pointHitRadius: 6,
+      spanGaps: false,
+      data: [],
+    })) },
     options: Object.assign({}, BASE_OPTS, {
       scales: {
         x: BASE_OPTS.scales.x,
         y: { min: 0, max: 100, ticks: { callback: (v) => v + "%" } },
       },
       plugins: {
+        legend: { labels: { boxWidth: 12, font: { size: 11 } } },
         tooltip: { callbacks: { label: resolutionLabel } },
       },
     }),
@@ -175,8 +194,8 @@ function netFooter(items) {
 }
 
 function resolutionLabel(item) {
-  const series = [currentView.res7, currentView.res60, currentView.res365];
-  const x = series[item.datasetIndex].counts[item.dataIndex];
+  const key = RES_HORIZONS[item.datasetIndex].key;
+  const x = currentView.res[key].counts[item.dataIndex];
   const scope = state.avg ? " over 3 mo" : "";
   return `${item.dataset.label}: ${item.formattedValue}% — ` +
          `${x.c} of ${x.o} PRs${scope}`;
@@ -191,10 +210,9 @@ function updateCharts(view) {
   charts.flow.update();
 
   charts.resolution.data.labels = view.months;
-  const [d7, d60, d365] = charts.resolution.data.datasets;
-  d7.data = view.res7.data;
-  d60.data = view.res60.data;
-  d365.data = view.res365.data;
+  charts.resolution.data.datasets.forEach((ds, i) => {
+    ds.data = view.res[RES_HORIZONS[i].key].data;
+  });
   charts.resolution.update();
 }
 

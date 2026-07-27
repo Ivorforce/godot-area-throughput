@@ -36,8 +36,9 @@ reviewed by a Godot maintainer. It contains no engine code.
 - **openAtEnd**: open PRs carrying the label at month end — emitted in the data
   files for other consumers, not currently charted.
 - **resolution rate**: of the PRs opened in a month, the share closed (merged
-  or not) within 7/60/365 days. A month that hasn't yet had the full 7/60/365
-  days is left out entirely rather than shown misleadingly fast. The data
+  or not) within each of ten log-spaced spans (1 day … 32 months), drawn as
+  layered "sediment" bands. A month that hasn't yet had a span's full length
+  is left out for that span rather than shown misleadingly fast. The data
   files carry raw closure counts plus a last-judgeable-month index; the page
   computes the rates, and its 3-month average combines the three months' PRs
   into one pool and computes the rate over the pool, so small months don't
@@ -108,8 +109,8 @@ Overview table (from `index.json`, trailing 12 complete months):
 - Labels are read as they are today: renamed labels keep their full history
   (they're tracked by ID), deleted labels keep their last-known name, and each
   label's charts start at its first-ever PR (early history undercounts).
-- Resolution-rate lines stop before the present — months that haven't yet had
-  the full 7/60/365 days aren't shown; deliberate, not missing data.
+- Resolution-rate layers stop before the present — months that haven't yet had
+  a span's full length aren't judged against it; deliberate, not missing data.
 - Release-branch PRs (base `3.x` etc.) are included: in Godot's workflow they
   are real work, not backport copies — cherry-picks land as batch commits (1–3
   batch PRs a month, negligible). The `cherrypick:*` labels are transient (

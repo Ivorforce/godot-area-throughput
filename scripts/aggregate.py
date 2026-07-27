@@ -27,7 +27,9 @@ ALL = "all"                  # pseudo-label: every PR, labeled or not
 MIN_LABEL_PRS = 20           # drop one-off/typo labels; 0 disables
 TABLE_MONTHS = 12            # trailing window for reviewer/author tables
 TABLE_ROWS = 30
-HORIZONS = (7, 60, 365)      # resolution-rate horizons, in days (~logarithmic)
+HORIZONS = (1, 3, 7, 14, 30, 60, 120, 240, 480, 960)  # resolution horizons, days
+                                                       # (~log-spaced; 60 also feeds
+                                                       # the overview res60 summary)
 RES60_PRIOR = 20             # pseudo-PRs pulling small labels' res60 toward the mean
 MIN_DECIDED_FOR_CONC = 25    # decisions below which concentration shows a count, not a %
 

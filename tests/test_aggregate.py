@@ -59,7 +59,7 @@ class TestAggregate(unittest.TestCase):
         res = result["labels"]["topic-core"]["resolution"]
         self.assertEqual(res["d7"]["through"], 5)    # even June had 7+ days
         self.assertEqual(res["d60"]["through"], 3)   # April is the last 60d+ cohort
-        self.assertEqual(res["d365"]["through"], -1)
+        self.assertEqual(res["d480"]["through"], -1)
 
     def test_bot_and_self_reviews_do_not_qualify(self):
         # PRs 2 (self) and 3 (bots incl. copilot and Bot-typename) never reviewed.
