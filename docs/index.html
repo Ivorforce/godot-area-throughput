@@ -34,6 +34,9 @@
   .range-group button:last-child { border-radius: 0 6px 6px 0; }
   .range-group button + button { border-left: none; }
   .range-group button[aria-pressed="true"] { background: #0969da; color: #fff; border-color: #0969da; }
+  /* Chart-scoped toggle in a heading: smaller than the heading text so it
+     reads as a control, not part of the title. */
+  h2 .range-group { font-size: .8rem; font-weight: 400; margin-left: .5rem; }
   .clamp-note { color: #9a6700; font-size: .85rem; }
   .caption { color: #57606a; font-size: .85rem; margin: .25rem 0 0; }
   .chart-box { position: relative; height: 300px; margin-top: .5rem; }
@@ -150,7 +153,12 @@ opening (backlog shrinking). The split shows outcome, not quality: an unmerged
 close is a decision too — a considered rejection or a superseded PR serves the
 area just as a merge does. Hover for exact counts and the net.</p>
 
-<h2>Resolution rate</h2>
+<h2>Resolution rate
+  <span class="range-group" role="group" aria-label="Unit" id="res-mode">
+    <button data-mode="share" aria-pressed="true">share</button>
+    <button data-mode="counts" aria-pressed="false">counts</button>
+  </span>
+</h2>
 <div class="chart-box tall"><canvas id="chart-resolution"></canvas></div>
 <p class="caption">Of the PRs opened each month, the share closed — merged or not —
 within each time span, layered from within-a-day (darkest, bottom) through
@@ -160,9 +168,11 @@ data update. Thicker dark layers = faster decisions; sinking layers mean newer P
 wait longer. Washed-out bands are months still younger than the span: they count
 the closures so far and can only grow — part of the sinking toward the right edge
 is just spans that haven't finished counting, and each span washes out at its own
-month, longest first. These are shares, not volumes — they can sink even while
-total closes grow, if intake grows faster; the Flow chart above has the absolute
-numbers, and the tooltip shows each layer's counts.</p>
+month, longest first. Shares are ratios, not volumes — layers can sink even while
+total closes grow, if intake grows faster. The counts toggle re-plots the same
+layers as absolute PRs under a gray intake line, with the gap up to that line the
+number still open; there, a thinner layer can also just mean a quieter month. The
+tooltip shows both units either way.</p>
 
 <h2 id="tables-heading">Last 12 months</h2>
 <p class="caption">Contribution counts by volunteers — not performance, not a ranking.
@@ -224,7 +234,9 @@ most decisions, that is capacity the project owes them, not a problem they cause
         collapse to zero width.</li>
     <li>The 3-mo average on the resolution chart combines the three months' PRs into
         one pool and computes the rate over that pool — averaging three percentages
-        would let a tiny month count as much as a busy one.</li>
+        would let a tiny month count as much as a busy one. In counts mode the
+        pooled sum is divided by the window length, keeping the axis
+        month-scaled.</li>
     <li>Decisions credited to a person are approvals, change requests, and closing
         someone else's PR unmerged. Merging is not separately credited — the release
         team merges what reviewers approved, so the approval is the decision. Nor is

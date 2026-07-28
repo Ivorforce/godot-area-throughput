@@ -4,7 +4,7 @@
 
 "use strict";
 
-const state = { label: null, range: 24, avg: true };
+const state = { label: null, range: 24, avg: true, resMode: "share" };
 const labelCache = new Map();
 let indexData = null;
 const charts = {};
@@ -49,6 +49,7 @@ function readHash() {
   if (params.get("l")) state.label = params.get("l");
   if (params.get("r")) state.range = params.get("r") === "all" ? "all" : +params.get("r");
   if (params.get("avg")) state.avg = params.get("avg") === "1";
+  if (params.get("res")) state.resMode = params.get("res") === "counts" ? "counts" : "share";
 }
 
 function writeHash() {
@@ -56,6 +57,7 @@ function writeHash() {
   params.set("l", state.label);
   params.set("r", state.range);
   params.set("avg", state.avg ? "1" : "0");
+  params.set("res", state.resMode);
   history.replaceState(null, "", "#" + params.toString());
 }
 
@@ -149,21 +151,25 @@ function computeView(data) {
 // 3-month cohort (weighted) instead of averaging percentages — this also
 // fills empty months whose window isn't, and needs no extra completeness
 // rule: a pooled window is complete iff its newest month is. Returns
-// {data, counts, solidThrough}; counts feed the tooltip's absolute numbers,
-// solidThrough (view-relative) the fade boundary.
+// {data, countData, counts, solidThrough}: data is the share, countData the
+// absolute count (a pooled mean, so counts mode stays month-scaled), counts
+// feed the tooltip's absolute numbers, solidThrough (view-relative) the
+// fade boundary.
 function resolutionSeries(data, horizon, slice, start) {
   const { closed, through } = data.resolution[horizon];
   const opened = data.opened;
   const counts = opened.map((v, i) => {
-    let o = v, c = closed[i];
+    let o = v, c = closed[i], w = 1;
     if (state.avg) {
-      o = 0; c = 0;
-      for (let j = Math.max(0, i - 2); j <= i; j++) { o += opened[j]; c += closed[j]; }
+      const j0 = Math.max(0, i - 2);
+      o = 0; c = 0; w = i - j0 + 1;
+      for (let j = j0; j <= i; j++) { o += opened[j]; c += closed[j]; }
     }
-    return { o, c };
+    return { o, c, w };
   });
   return {
     data: slice(counts.map((x) => (x.o ? Math.round(1000 * x.c / x.o) / 10 : null))),
+    countData: slice(counts.map((x) => Math.round(10 * x.c / x.w) / 10)),
     counts: slice(counts),
     solidThrough: through - start,
   };
@@ -261,7 +267,12 @@ function createCharts() {
             ? h.tint : undefined,
       },
       data: [],
-    })) },
+    })).concat([
+      // Intake envelope for counts mode: the gap between it and the top
+      // layer is the number still open. Empty in share mode, where the
+      // legend filter also hides its entry.
+      line("opened", COLORS.opened),
+    ]) },
     options: Object.assign({}, BASE_OPTS, {
       scales: {
         x: BASE_OPTS.scales.x,
@@ -270,7 +281,8 @@ function createCharts() {
       plugins: {
         // Longest span first in legend and tooltip, matching the visual
         // stack top-down (lightest top surface -> darkest bottom band).
-        legend: { reverse: true, labels: { boxWidth: 12, font: { size: 11 } } },
+        legend: { reverse: true, labels: { boxWidth: 12, font: { size: 11 },
+          filter: (item) => state.resMode === "counts" || item.text !== "opened" } },
         tooltip: {
           itemSort: (a, b) => b.datasetIndex - a.datasetIndex,
           callbacks: { label: resolutionLabel, footer: stillOpenFooter },
@@ -292,10 +304,19 @@ function netFooter(items) {
 }
 
 function resolutionLabel(item) {
-  const r = currentView.res[RES_HORIZONS[item.datasetIndex].key];
-  const x = r.counts[item.dataIndex];
   const scope = state.avg ? " over 3 mo" : "";
+  const h = RES_HORIZONS[item.datasetIndex];
+  if (!h) {  // the intake envelope (counts mode only)
+    const x = currentView.res.ever.counts[item.dataIndex];
+    return `opened: ${x.o} PRs${scope}`;
+  }
+  const r = currentView.res[h.key];
+  const x = r.counts[item.dataIndex];
   const soFar = item.dataIndex > r.solidThrough ? " so far" : "";
+  if (state.resMode === "counts") {
+    const pct = x.o ? ` (${Math.round(1000 * x.c / x.o) / 10}%)` : "";
+    return `${item.dataset.label}: ${x.c} of ${x.o} PRs${soFar}${scope}${pct}`;
+  }
   return `${item.dataset.label}: ${item.formattedValue}%${soFar} — ` +
          `${x.c} of ${x.o} PRs${scope}`;
 }
@@ -319,9 +340,15 @@ function updateCharts(view) {
   charts.flow.update();
 
   charts.resolution.data.labels = view.months;
+  const share = state.resMode === "share";
   charts.resolution.data.datasets.forEach((ds, i) => {
-    ds.data = view.res[RES_HORIZONS[i].key].data;
+    const h = RES_HORIZONS[i];
+    ds.data = h ? (share ? view.res[h.key].data : view.res[h.key].countData)
+                : (share ? [] : view.opened);
   });
+  charts.resolution.options.scales.y = share
+    ? { min: 0, max: 100, ticks: { callback: (v) => v + "%" } }
+    : { beginAtZero: true };
   charts.resolution.update();
 }
 
@@ -565,7 +592,9 @@ function buildSelector() {
 }
 
 function bindControls() {
-  for (const btn of document.querySelectorAll(".range-group button")) {
+  // ".controls" scope matters: the resolution chart's share/counts toggle
+  // reuses .range-group styling but has its own handler below.
+  for (const btn of document.querySelectorAll(".controls .range-group button")) {
     btn.addEventListener("click", () => {
       state.range = btn.dataset.range === "all" ? "all" : +btn.dataset.range;
       render();
@@ -575,14 +604,23 @@ function bindControls() {
     state.avg = e.target.checked;
     render();
   });
+  for (const btn of document.querySelectorAll("#res-mode button")) {
+    btn.addEventListener("click", () => {
+      state.resMode = btn.dataset.mode;
+      render();
+    });
+  }
 }
 
 function syncControls() {
   document.getElementById("label-select").value = state.label;
-  for (const btn of document.querySelectorAll(".range-group button")) {
+  for (const btn of document.querySelectorAll(".controls .range-group button")) {
     btn.setAttribute("aria-pressed", String(btn.dataset.range) === String(state.range));
   }
   document.getElementById("avg-toggle").checked = state.avg;
+  for (const btn of document.querySelectorAll("#res-mode button")) {
+    btn.setAttribute("aria-pressed", String(btn.dataset.mode === state.resMode));
+  }
 }
 
 // ---- main -------------------------------------------------------------------

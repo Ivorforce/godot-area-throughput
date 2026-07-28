@@ -42,7 +42,9 @@ reviewed by a Godot maintainer. It contains no engine code.
   (the chart's white gap) is exactly the share still open at the data
   snapshot. A month that hasn't yet had a span's full length shows its
   closures so far — a lower bound that only grows, drawn washed out until the
-  span completes. The data files carry raw closure counts plus a
+  span completes. A share&thinsp;/&thinsp;counts toggle re-plots the layers as
+  absolute PRs under the month's intake line, the gap up to it being the
+  number still open. The data files carry raw closure counts plus a
   last-complete-month index per span; the page computes the rates, and its
   3-month average combines the three months' PRs into one pool and computes
   the rate over the pool, so small months don't distort it.
