@@ -123,6 +123,7 @@ def build_aggregates(records, last_month, min_label_prs=MIN_LABEL_PRS, now=None)
             "reviewsSubmitted": [0] * n, "openDelta": [0] * n,
             "reviewerSets": defaultdict(set),      # month i -> reviewer keys
             "closedWithin": {h: [0] * n for h in HORIZONS},  # by opening month
+            "closedEver": [0] * n,                 # closed by the snapshot, any age
             "firstSeen": None, "total": 0, "openNow": 0, "truncated": 0,
             "rev12": defaultdict(set),             # reviewer -> pr numbers in window
             "dec12": defaultdict(set),             # reviewer -> pr numbers with verdict
@@ -194,6 +195,7 @@ def build_aggregates(records, last_month, min_label_prs=MIN_LABEL_PRS, now=None)
             for i, c in sub_counts.items():
                 L["reviewsSubmitted"][i] += c
             if rec["closedAt"]:
+                L["closedEver"][created_i] += 1
                 delta = days_between(rec["createdAt"], rec["closedAt"])
                 for h in HORIZONS:
                     if delta <= h:
@@ -261,10 +263,12 @@ def build_aggregates(records, last_month, min_label_prs=MIN_LABEL_PRS, now=None)
             running += d
             open_at_end.append(running)
 
-        # Per-horizon closure counts plus the last judgeable month index
-        # (eligibility is a prefix of the axis). The page computes the rates,
-        # so its rolling average can pool cohorts weighted instead of
-        # averaging percentages.
+        # Per-horizon closure counts plus the last complete month index
+        # (completeness is a prefix of the axis). Counts continue past
+        # `through`: there they are lower bounds that only grow until the
+        # span completes, and the page draws them washed out. The page
+        # computes the rates, so its rolling average can pool cohorts
+        # weighted instead of averaging percentages.
         resolution = {}
         for h in HORIZONS:
             eligible = [i for i in range(n)
@@ -273,6 +277,10 @@ def build_aggregates(records, last_month, min_label_prs=MIN_LABEL_PRS, now=None)
                 "closed": L["closedWithin"][h],
                 "through": eligible[-1] if eligible else -1,
             }
+        # "ever": closed by the snapshot at any age. Always complete — it
+        # states a current fact, not a span rate — so its complement (the
+        # chart's white gap) is exactly the share still open.
+        resolution["ever"] = {"closed": L["closedEver"], "through": n - 1}
 
         def table(rows, remainder_label):
             head, rest = rows[:TABLE_ROWS], rows[TABLE_ROWS:]

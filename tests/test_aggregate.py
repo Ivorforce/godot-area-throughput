@@ -49,8 +49,12 @@ class TestAggregate(unittest.TestCase):
         self.assertEqual(res["d60"]["closed"], [0, 2, 0, 0, 0, 0])
         self.assertEqual(res["d7"]["closed"], [0, 0, 0, 0, 0, 0])
         self.assertEqual(res["d60"]["through"], 5)   # 2020 is long past
+        # Feb cohort again: PR4 and PR6 are the only core closes at any age.
+        self.assertEqual(res["ever"]["closed"], [0, 2, 0, 0, 0, 0])
+        self.assertEqual(res["ever"]["through"], 5)  # spans the whole axis
         gui = self.result["labels"]["topic-gui"]["resolution"]
         self.assertEqual(gui["d60"]["closed"], [0, 1, 0, 0, 1, 0])  # PR5, PR10
+        self.assertEqual(gui["ever"]["closed"], [0, 1, 0, 0, 1, 0])
 
     def test_resolution_eligibility(self):
         result = aggregate.build_aggregates(
@@ -60,6 +64,7 @@ class TestAggregate(unittest.TestCase):
         self.assertEqual(res["d7"]["through"], 5)    # even June had 7+ days
         self.assertEqual(res["d60"]["through"], 3)   # April is the last 60d+ cohort
         self.assertEqual(res["d480"]["through"], -1)
+        self.assertEqual(res["ever"]["through"], 5)  # a current fact, never censored
 
     def test_bot_and_self_reviews_do_not_qualify(self):
         # PRs 2 (self) and 3 (bots incl. copilot and Bot-typename) never reviewed.

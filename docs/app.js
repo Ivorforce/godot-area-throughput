@@ -16,7 +16,9 @@ const COLORS = {
 
 // Sediment layers. Chart.js paints dataset 0 last (on top), so the shortest
 // horizon — smallest, darkest band — comes first and ends up covering the
-// bottom of the progressively larger, lighter layers behind it.
+// bottom of the progressively larger, lighter layers behind it. "ever" is
+// closed-by-snapshot at any age: the top layer, whose complement (the white
+// gap) is exactly the share still open.
 const RES_HORIZONS = [
   { key: "d1", label: "within 1 day", color: "#0d366b" },
   { key: "d3", label: "within 3 days", color: "#104281" },
@@ -28,7 +30,18 @@ const RES_HORIZONS = [
   { key: "d240", label: "within 8 months", color: "#5598e7" },
   { key: "d480", label: "within 16 months", color: "#6da7ec" },
   { key: "d960", label: "within 32 months", color: "#86b6ef" },
+  { key: "ever", label: "closed to date", color: "#9fc5f2" },
 ];
+
+// Months younger than a span show closures-so-far: lower bounds that only
+// grow, drawn in this washed-out tint. The tint is the layer color at
+// one-third strength over white but painted opaque — real translucency would
+// composite the nested fills into colors that match no legend entry.
+for (const h of RES_HORIZONS) {
+  const rgb = [1, 3, 5].map((o) =>
+    Math.round(parseInt(h.color.slice(o, o + 2), 16) / 3 + 170));
+  h.tint = `rgb(${rgb.join(",")})`;
+}
 
 // ---- state <-> hash ---------------------------------------------------------
 
@@ -125,19 +138,22 @@ function computeView(data) {
     opened: series(data.opened),
     closed: series(data.merged.map((v, i) => v + data.closedUnmerged[i])),
     res: Object.fromEntries(RES_HORIZONS.map((h) =>
-      [h.key, resolutionSeries(data, h.key, slice)])),
+      [h.key, resolutionSeries(data, h.key, slice, start)])),
   };
 }
 
-// Rate per month from raw counts; months past `through` are too young to
-// judge. With averaging on, pool the 3-month cohort (weighted) instead of
-// averaging percentages — this also fills empty months whose window isn't.
-// Returns {data, counts}; counts feed the tooltip's absolute numbers.
-function resolutionSeries(data, horizon, slice) {
+// Rate per month from raw counts. Months past `through` haven't lived the
+// span's full length: their counts are closures-so-far, kept as lower bounds
+// and drawn washed out rather than dropped. With averaging on, pool the
+// 3-month cohort (weighted) instead of averaging percentages — this also
+// fills empty months whose window isn't, and needs no extra completeness
+// rule: a pooled window is complete iff its newest month is. Returns
+// {data, counts, solidThrough}; counts feed the tooltip's absolute numbers,
+// solidThrough (view-relative) the fade boundary.
+function resolutionSeries(data, horizon, slice, start) {
   const { closed, through } = data.resolution[horizon];
   const opened = data.opened;
   const counts = opened.map((v, i) => {
-    if (i > through) return null;
     let o = v, c = closed[i];
     if (state.avg) {
       o = 0; c = 0;
@@ -146,8 +162,9 @@ function resolutionSeries(data, horizon, slice) {
     return { o, c };
   });
   return {
-    data: slice(counts.map((x) => (x && x.o ? Math.round(1000 * x.c / x.o) / 10 : null))),
+    data: slice(counts.map((x) => (x.o ? Math.round(1000 * x.c / x.o) / 10 : null))),
     counts: slice(counts),
+    solidThrough: through - start,
   };
 }
 
@@ -221,6 +238,13 @@ function createCharts() {
       pointRadius: 0,
       pointHitRadius: 6,
       spanGaps: false,
+      // Wash out the fill where the span is not yet complete (see
+      // resolutionSeries); undefined falls back to the solid color.
+      segment: {
+        backgroundColor: (ctx) =>
+          currentView && ctx.p1DataIndex > currentView.res[h.key].solidThrough
+            ? h.tint : undefined,
+      },
       data: [],
     })) },
     options: Object.assign({}, BASE_OPTS, {
@@ -234,7 +258,7 @@ function createCharts() {
         legend: { reverse: true, labels: { boxWidth: 12, font: { size: 11 } } },
         tooltip: {
           itemSort: (a, b) => b.datasetIndex - a.datasetIndex,
-          callbacks: { label: resolutionLabel },
+          callbacks: { label: resolutionLabel, footer: stillOpenFooter },
         },
       },
     }),
@@ -251,11 +275,21 @@ function netFooter(items) {
 }
 
 function resolutionLabel(item) {
-  const key = RES_HORIZONS[item.datasetIndex].key;
-  const x = currentView.res[key].counts[item.dataIndex];
+  const r = currentView.res[RES_HORIZONS[item.datasetIndex].key];
+  const x = r.counts[item.dataIndex];
   const scope = state.avg ? " over 3 mo" : "";
-  return `${item.dataset.label}: ${item.formattedValue}% — ` +
+  const soFar = item.dataIndex > r.solidThrough ? " so far" : "";
+  return `${item.dataset.label}: ${item.formattedValue}%${soFar} — ` +
          `${x.c} of ${x.o} PRs${scope}`;
+}
+
+// The white gap in numbers: opened minus closed-to-date.
+function stillOpenFooter(items) {
+  if (!items.length) return "";
+  const x = currentView.res.ever.counts[items[0].dataIndex];
+  if (!x.o) return "";
+  const scope = state.avg ? " over 3 mo" : "";
+  return `still open: ${x.o - x.c} of ${x.o}${scope}`;
 }
 
 function updateCharts(view) {

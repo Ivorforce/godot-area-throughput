@@ -37,12 +37,14 @@ reviewed by a Godot maintainer. It contains no engine code.
   files for other consumers, not currently charted.
 - **resolution rate**: of the PRs opened in a month, the share closed (merged
   or not) within each of ten log-spaced spans (1 day … 32 months), drawn as
-  layered "sediment" bands. A month that hasn't yet had a span's full length
-  is left out for that span rather than shown misleadingly fast. The data
-  files carry raw closure counts plus a last-judgeable-month index; the page
-  computes the rates, and its 3-month average combines the three months' PRs
-  into one pool and computes the rate over the pool, so small months don't
-  distort it.
+  layered "sediment" bands, topped by a closed-to-date layer whose complement
+  (the chart's white gap) is exactly the share still open at the data
+  snapshot. A month that hasn't yet had a span's full length shows its
+  closures so far — a lower bound that only grows, drawn washed out until the
+  span completes. The data files carry raw closure counts plus a
+  last-complete-month index per span; the page computes the rates, and its
+  3-month average combines the three months' PRs into one pool and computes
+  the rate over the pool, so small months don't distort it.
 - The **all** pseudo-label covers every PR, including unlabeled ones.
 - The current partial month is excluded from all series. Labels applied to
   fewer than 20 PRs all-time are dropped, as are issue-only labels
@@ -120,8 +122,8 @@ Overview table (from `index.json`, trailing 12 complete months):
   resolution rates, reviewers, and backlog describe "PRs touching X", not a
   dedicated X team's service. This does not even out — the bias flows one way,
   from high-traffic primary areas into commonly-secondary labels.
-- Resolution-rate layers stop before the present — months that haven't yet had
-  a span's full length aren't judged against it; deliberate, not missing data.
+- Resolution-rate bands for months younger than their span are drawn washed
+  out and count closures so far — lower bounds, not estimates or projections.
 - Release-branch PRs (base `3.x` etc.) are included: in Godot's workflow they
   are real work, not backport copies — cherry-picks land as batch commits (1–3
   batch PRs a month, negligible). The `cherrypick:*` labels are transient (
