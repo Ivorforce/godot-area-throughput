@@ -36,7 +36,7 @@ reviewed by a Godot maintainer. It contains no engine code.
 - **openAtEnd**: open PRs carrying the label at month end — emitted in the data
   files for other consumers, not currently charted.
 - **resolution rate**: of the PRs opened in a month, the share closed (merged
-  or not) within each of ten log-spaced spans (1 day … 32 months), drawn as
+  or not) within each of five log-spaced spans (1 day … 32 months), drawn as
   layered "sediment" bands, topped by a closed-to-date layer whose complement
   (the chart's white gap) is exactly the share still open at the data
   snapshot. A month that hasn't yet had a span's full length shows its
