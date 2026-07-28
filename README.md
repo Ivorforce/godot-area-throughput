@@ -32,7 +32,8 @@ reviewed by a Godot maintainer. It contains no engine code.
   superseded/stale PRs — those are not distinguishable from technical
   rejections without encoding role knowledge.
 - **opened / merged / closed unmerged**: by createdAt / mergedAt / closedAt.
-  The page's Flow chart shows opened vs closed (merged + unmerged combined).
+  The page's Flow chart shows opened vs closed, with the closes split into
+  merged and closed-unmerged fills.
 - **openAtEnd**: open PRs carrying the label at month end — emitted in the data
   files for other consumers, not currently charted.
 - **resolution rate**: of the PRs opened in a month, the share closed (merged

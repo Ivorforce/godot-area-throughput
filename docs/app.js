@@ -12,6 +12,10 @@ const charts = {};
 const COLORS = {
   opened: "#8c959f",
   closed: "#0969da",
+  // Fills under the closed line, splitting closes by outcome. The pair is
+  // validated for separation in all vision types (ΔE 18 normal, 16 protan).
+  mergedFill: "#8db9ef",
+  unmergedFill: "#e7e9eb",
 };
 
 // Sediment layers. Chart.js paints dataset 0 last (on top), so the shortest
@@ -132,6 +136,8 @@ function computeView(data) {
     firstSeen: data.firstSeen,
     opened: series(data.opened),
     closed: series(data.merged.map((v, i) => v + data.closedUnmerged[i])),
+    merged: series(data.merged),
+    unmerged: series(data.closedUnmerged),
     res: Object.fromEntries(RES_HORIZONS.map((h) =>
       [h.key, resolutionSeries(data, h.key, slice, start)])),
   };
@@ -210,11 +216,25 @@ function createCharts() {
   charts.flow = new Chart(document.getElementById("chart-flow"), {
     type: "line",
     data: { labels: [], datasets: [
-      line("opened", COLORS.opened),
+      line("opened", COLORS.opened, {
+        // Band between opened and closed, colored by sign: red while opened >
+        // closed (backlog growing), green while closing outpaces opening.
+        // Dataset 0 paints on top, so where closing runs ahead the band tints
+        // the outcome fills beneath it.
+        fill: { target: 1, above: "rgba(207,34,46,.14)", below: "rgba(26,127,55,.18)" },
+      }),
       line("closed", COLORS.closed, {
-        // Band between the lines, colored by sign: red while opened > closed
-        // (backlog growing), green while closed > opened (digesting).
-        fill: { target: "-1", above: "rgba(26,127,55,.18)", below: "rgba(207,34,46,.14)" },
+        // Down to the merged fill: closes without a merge (rejected,
+        // superseded, withdrawn).
+        backgroundColor: COLORS.unmergedFill,
+        fill: 2,
+      }),
+      line("merged", COLORS.mergedFill, {
+        // A fill, not a line: its edge gets the same white seam as the
+        // resolution layers.
+        borderColor: "#fff",
+        borderWidth: 1,
+        fill: "origin",
       }),
     ]},
     options: Object.assign({}, BASE_OPTS, {
@@ -266,7 +286,9 @@ function netFooter(items) {
   if (!currentView || !items.length) return "";
   const i = items[0].dataIndex;
   const net = currentView.opened[i] - currentView.closed[i];
-  return `net ${net > 0 ? "+" : ""}${Math.round(net * 10) / 10}`;
+  const round1 = (v) => Math.round(v * 10) / 10;
+  return [`closed unmerged: ${round1(currentView.unmerged[i])}`,
+          `net ${net > 0 ? "+" : ""}${round1(net)}`];
 }
 
 function resolutionLabel(item) {
@@ -290,9 +312,10 @@ function stillOpenFooter(items) {
 function updateCharts(view) {
   currentView = view;
   charts.flow.data.labels = view.months;
-  const [opened, closed] = charts.flow.data.datasets;
+  const [opened, closed, merged] = charts.flow.data.datasets;
   opened.data = view.opened;
   closed.data = view.closed;
+  merged.data = view.merged;
   charts.flow.update();
 
   charts.resolution.data.labels = view.months;

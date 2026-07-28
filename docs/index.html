@@ -142,9 +142,13 @@ volunteers donating their time.</p>
 
 <h2>Flow</h2>
 <div class="chart-box"><canvas id="chart-flow"></canvas></div>
-<p class="caption">PRs opened vs PRs closed (merged or not) per month. The band between
-the lines is the monthly imbalance: red while more opens than closes (backlog growing),
-green while closing outpaces opening (backlog shrinking). Hover for the exact net.</p>
+<p class="caption">PRs opened vs PRs closed per month, with the closes split by
+outcome: merged (blue fill) vs closed without merging — rejected, superseded, or
+withdrawn (gray fill). The band between the lines is the monthly imbalance: red
+while more opens than closes (backlog growing), green while closing outpaces
+opening (backlog shrinking). The split shows outcome, not quality: an unmerged
+close is a decision too — a considered rejection or a superseded PR serves the
+area just as a merge does. Hover for exact counts and the net.</p>
 
 <h2>Resolution rate</h2>
 <div class="chart-box tall"><canvas id="chart-resolution"></canvas></div>
