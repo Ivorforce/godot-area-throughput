@@ -22,25 +22,22 @@ const COLORS = {
 // horizon — smallest, darkest band — comes first and ends up covering the
 // bottom of the progressively larger, lighter layers behind it. "ever" is
 // closed-by-snapshot at any age: the top layer, whose complement (the white
-// gap) is exactly the share still open.
+// gap) is exactly the share still open. Each span band ends at the last
+// month old enough to have lived the span in full (see resolutionSeries);
+// younger months' closures show only in the always-exact "ever" layer.
+// "ever" is deliberately desaturated, not the ramp's next step: it sits
+// outside the speed ramp (on recent months it holds mostly fast closures
+// not yet sorted into spans), so reading it as "slower still" would be
+// wrong. Gray-blue keeps it in the closed-family while breaking the ramp
+// (ΔE 8.3 protan / 12 normal against d960).
 const RES_HORIZONS = [
   { key: "d1", label: "within 1 day", color: "#0d366b" },
   { key: "d7", label: "within 1 week", color: "#184f95" },
   { key: "d60", label: "within 2 months", color: "#2a78d6" },
   { key: "d240", label: "within 8 months", color: "#5598e7" },
   { key: "d960", label: "within 32 months", color: "#86b6ef" },
-  { key: "ever", label: "closed to date", color: "#9fc5f2" },
+  { key: "ever", label: "closed to date", color: "#bfcbdf" },
 ];
-
-// Months younger than a span show closures-so-far: lower bounds that only
-// grow, drawn in this washed-out tint. The tint is the layer color at
-// one-third strength over white but painted opaque — real translucency would
-// composite the nested fills into colors that match no legend entry.
-for (const h of RES_HORIZONS) {
-  const rgb = [1, 3, 5].map((o) =>
-    Math.round(parseInt(h.color.slice(o, o + 2), 16) / 3 + 170));
-  h.tint = `rgb(${rgb.join(",")})`;
-}
 
 // ---- state <-> hash ---------------------------------------------------------
 
@@ -141,21 +138,21 @@ function computeView(data) {
     merged: series(data.merged),
     unmerged: series(data.closedUnmerged),
     res: Object.fromEntries(RES_HORIZONS.map((h) =>
-      [h.key, resolutionSeries(data, h.key, slice, start)])),
+      [h.key, resolutionSeries(data, h.key, slice)])),
   };
 }
 
 // Rate per month from raw counts. Months past `through` haven't lived the
-// span's full length: their counts are closures-so-far, kept as lower bounds
-// and drawn washed out rather than dropped. With averaging on, pool the
-// 3-month cohort (weighted) instead of averaging percentages — this also
-// fills empty months whose window isn't, and needs no extra completeness
-// rule: a pooled window is complete iff its newest month is. Returns
-// {data, countData, counts, solidThrough}: data is the share, countData the
-// absolute count (a pooled mean, so counts mode stays month-scaled), counts
-// feed the tooltip's absolute numbers, solidThrough (view-relative) the
-// fade boundary.
-function resolutionSeries(data, horizon, slice, start) {
+// span's full length: their closures aren't attributable to the span yet, so
+// the band is cut there (nulls) and that mass shows only in the "ever" layer,
+// which is exact for every month — nothing drawn is a projection. With
+// averaging on, pool the 3-month cohort (weighted) instead of averaging
+// percentages — this also fills empty months whose window isn't, and needs
+// no extra completeness rule: a pooled window is complete iff its newest
+// month is. Returns {data, countData, counts}: data is the share, countData
+// the absolute count (a pooled mean, so counts mode stays month-scaled),
+// counts feed the tooltip's absolute numbers.
+function resolutionSeries(data, horizon, slice) {
   const { closed, through } = data.resolution[horizon];
   const opened = data.opened;
   const counts = opened.map((v, i) => {
@@ -167,11 +164,11 @@ function resolutionSeries(data, horizon, slice, start) {
     }
     return { o, c, w };
   });
+  const cut = (arr) => arr.map((v, i) => (i <= through ? v : null));
   return {
-    data: slice(counts.map((x) => (x.o ? Math.round(1000 * x.c / x.o) / 10 : null))),
-    countData: slice(counts.map((x) => Math.round(10 * x.c / x.w) / 10)),
+    data: slice(cut(counts.map((x) => (x.o ? Math.round(1000 * x.c / x.o) / 10 : null)))),
+    countData: slice(cut(counts.map((x) => Math.round(10 * x.c / x.w) / 10))),
     counts: slice(counts),
-    solidThrough: through - start,
   };
 }
 
@@ -259,13 +256,6 @@ function createCharts() {
       pointRadius: 0,
       pointHitRadius: 6,
       spanGaps: false,
-      // Wash out the fill where the span is not yet complete (see
-      // resolutionSeries); undefined falls back to the solid color.
-      segment: {
-        backgroundColor: (ctx) =>
-          currentView && ctx.p1DataIndex > currentView.res[h.key].solidThrough
-            ? h.tint : undefined,
-      },
       data: [],
     })).concat([
       // Intake envelope for counts mode: the gap between it and the top
@@ -310,14 +300,12 @@ function resolutionLabel(item) {
     const x = currentView.res.ever.counts[item.dataIndex];
     return `opened: ${x.o} PRs${scope}`;
   }
-  const r = currentView.res[h.key];
-  const x = r.counts[item.dataIndex];
-  const soFar = item.dataIndex > r.solidThrough ? " so far" : "";
+  const x = currentView.res[h.key].counts[item.dataIndex];
   if (state.resMode === "counts") {
     const pct = x.o ? ` (${Math.round(1000 * x.c / x.o) / 10}%)` : "";
-    return `${item.dataset.label}: ${x.c} of ${x.o} PRs${soFar}${scope}${pct}`;
+    return `${item.dataset.label}: ${x.c} of ${x.o} PRs${scope}${pct}`;
   }
-  return `${item.dataset.label}: ${item.formattedValue}%${soFar} — ` +
+  return `${item.dataset.label}: ${item.formattedValue}% — ` +
          `${x.c} of ${x.o} PRs${scope}`;
 }
 

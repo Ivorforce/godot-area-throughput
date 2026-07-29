@@ -40,9 +40,10 @@ reviewed by a Godot maintainer. It contains no engine code.
   or not) within each of five log-spaced spans (1 day … 32 months), drawn as
   layered "sediment" bands, topped by a closed-to-date layer whose complement
   (the chart's white gap) is exactly the share still open at the data
-  snapshot. A month that hasn't yet had a span's full length shows its
-  closures so far — a lower bound that only grows, drawn washed out until the
-  span completes. A share&thinsp;/&thinsp;counts toggle re-plots the layers as
+  snapshot. Each span band ends at the last month old enough to have lived
+  the span in full; younger months' closures show only in the closed-to-date
+  layer, so everything drawn is exact — no projections or lower bounds. A
+  share&thinsp;/&thinsp;counts toggle re-plots the layers as
   absolute PRs under the month's intake line, the gap up to it being the
   number still open. The data files carry raw closure counts plus a
   last-complete-month index per span; the page computes the rates, and its
@@ -125,8 +126,9 @@ Overview table (from `index.json`, trailing 12 complete months):
   resolution rates, reviewers, and backlog describe "PRs touching X", not a
   dedicated X team's service. This does not even out — the bias flows one way,
   from high-traffic primary areas into commonly-secondary labels.
-- Resolution-rate bands for months younger than their span are drawn washed
-  out and count closures so far — lower bounds, not estimates or projections.
+- Resolution-rate span bands stop at the last month old enough to have lived
+  the span in full; younger months' closures show only in the closed-to-date
+  layer. Nothing drawn is a projection.
 - Release-branch PRs (base `3.x` etc.) are included: in Godot's workflow they
   are real work, not backport copies — cherry-picks land as batch commits (1–3
   batch PRs a month, negligible). The `cherrypick:*` labels are transient (

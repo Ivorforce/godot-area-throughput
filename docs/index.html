@@ -162,13 +162,14 @@ area just as a merge does. Hover for exact counts and the net.</p>
 <div class="chart-box tall"><canvas id="chart-resolution"></canvas></div>
 <p class="caption">Of the PRs opened each month, the share closed — merged or not —
 within each time span, layered from within-a-day (darkest, bottom) through
-within-32-months, topped by closed-to-date (lightest). The white gap above the top
+within-32-months, topped by closed-to-date (gray-blue — closed at some point,
+outside the speed ramp). The white gap above the top
 layer is exact: of the PRs opened that month, the share still open as of the last
 data update. Thicker dark layers = faster decisions; sinking layers mean newer PRs
-wait longer. Washed-out bands are months still younger than the span: they count
-the closures so far and can only grow — part of the sinking toward the right edge
-is just spans that haven't finished counting, and each span washes out at its own
-month, longest first. Shares are ratios, not volumes — layers can sink even while
+wait longer. Each span's band ends at the last month old enough to have lived the
+span in full; younger months' closures aren't sorted into spans yet and show only
+in the closed-to-date layer — the same closures at coarser resolution, so nothing
+drawn is an estimate. Shares are ratios, not volumes — layers can sink even while
 total closes grow, if intake grows faster. The counts toggle re-plots the same
 layers as absolute PRs under a gray intake line, with the gap up to that line the
 number still open; there, a thinner layer can also just mean a quieter month. The
@@ -223,15 +224,12 @@ most decisions, that is capacity the project owes them, not a problem they cause
         misreads what they measure.</li>
     <li>All series apply today's labels to yesterday's PRs — treat early history
         as an approximation.</li>
-    <li>Washed-out resolution-rate bands are lower bounds, not estimates: a month
-        younger than a span shows its closures so far, and the band can only grow
-        until the span completes and it turns solid. The closed-to-date layer and
-        the white gap above it are exact as of the data snapshot.</li>
-    <li>Several washed-out bands can be filling in at once: a month's PRs differ
-        in age by up to a month — up to three with the 3-mo average, which pools
-        neighboring cohorts — so one point can straddle more than one span window.
-        Spans no pooled PR has reached yet coincide with closed-to-date and
-        collapse to zero width.</li>
+    <li>Resolution-rate span bands stop at the last month whose PRs have all had
+        the span's full length (with the 3-mo average, a pooled window counts once
+        its newest month has). Younger months' closures appear only in the
+        closed-to-date layer until their spans complete — every value drawn is
+        exact as of the data snapshot, never a projection. On short ranges the
+        longest spans may have no complete month at all and not appear.</li>
     <li>The 3-mo average on the resolution chart combines the three months' PRs into
         one pool and computes the rate over that pool — averaging three percentages
         would let a tiny month count as much as a busy one. In counts mode the
